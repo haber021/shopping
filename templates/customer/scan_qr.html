@@ -1,0 +1,323 @@
+{% extends 'customer/base.html' %}
+{% load customer_tags %}
+
+{% block title %}Scan Order QR Code{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h3 class="mb-0">Scan Order QR Code</h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-qrcode fa-5x text-primary mb-3"></i>
+                        <h4>Scan QR Code to Update Order Status</h4>
+                        <p class="text-muted">Use this tool to scan order QR codes and update delivery status.</p>
+                    </div>
+                    
+                    <!-- Camera Access Interface -->
+                    <div class="text-center mb-4">
+                        <div id="camera-container" class="mx-auto mb-3" style="max-width: 400px; max-height: 400px; position: relative;">
+                            <video id="qr-video" class="w-100 border rounded" style="background-color: #f8f9fa;"></video>
+                            <div class="qr-overlay">
+                                <div class="qr-scanner-line"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button id="start-camera" class="btn btn-primary me-2">
+                                <i class="fas fa-camera me-2"></i>Start Camera
+                            </button>
+                            <button id="stop-camera" class="btn btn-secondary" disabled>
+                                <i class="fas fa-stop-circle me-2"></i>Stop Camera
+                            </button>
+                        </div>
+                        
+                        <p class="text-muted small">Point your camera at an order QR code to scan.</p>
+                    </div>
+                    
+                    <!-- Manual Entry Option -->
+                    <div class="mt-5">
+                        <h5 class="text-center mb-3">Or Enter Order ID Manually</h5>
+                        <form action="{% url 'customer:scan_qr_code' %}" method="get" class="d-flex justify-content-center">
+                            <div class="input-group" style="max-width: 400px;">
+                                <input type="number" name="order_id" class="form-control" placeholder="Enter Order ID" required>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Check Order
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- For Staff: Delivery Status Update Form (shown only for staff) -->
+                    {% if user.is_staff %}
+                        <div class="mt-5 p-4 bg-light rounded">
+                            <h5>Update Order Status (Staff Only)</h5>
+                            <form id="scan-result-form" class="d-none">
+                                <div class="mb-3">
+                                    <label for="order-id" class="form-label">Order ID</label>
+                                    <input type="text" class="form-control" id="order-id" readonly>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Update Status</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="processing">Processing</option>
+                                        <option value="packed">Packed</option>
+                                        <option value="shipped">Shipped</option>
+                                        <option value="out_for_delivery">Out for Delivery</option>
+                                        <option value="delivered">Delivered</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="update-location" name="update_location">
+                                        <label class="form-check-label" for="update-location">
+                                            Update location with my current location
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Update Order Status
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* QR Scanner Styles */
+    .qr-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 2px solid transparent;
+        box-shadow: inset 0 0 0 2px rgba(0,0,0,0.1);
+        pointer-events: none;
+    }
+    
+    .qr-scanner-line {
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background-color: rgba(40, 167, 69, 0.8);
+        top: 50%;
+        transform: translateY(-50%);
+        animation: scan 2s linear infinite;
+    }
+    
+    @keyframes scan {
+        0% {
+            top: 10%;
+        }
+        50% {
+            top: 90%;
+        }
+        100% {
+            top: 10%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+    // QR code scanning functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('qr-video');
+        const startCameraBtn = document.getElementById('start-camera');
+        const stopCameraBtn = document.getElementById('stop-camera');
+        const scanResultForm = document.getElementById('scan-result-form');
+        const orderIdInput = document.getElementById('order-id');
+        
+        let stream = null;
+        let scanning = false;
+        
+        // Start camera
+        startCameraBtn.addEventListener('click', async function() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' }
+                });
+                video.srcObject = stream;
+                video.play();
+                
+                startCameraBtn.disabled = true;
+                stopCameraBtn.disabled = false;
+                
+                scanning = true;
+                scanQRCode();
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                alert('Could not access the camera. Please make sure you have granted camera permissions.');
+            }
+        });
+        
+        // Stop camera
+        stopCameraBtn.addEventListener('click', function() {
+            if (stream) {
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                video.srcObject = null;
+                
+                startCameraBtn.disabled = false;
+                stopCameraBtn.disabled = true;
+                
+                scanning = false;
+            }
+        });
+        
+        // Process frames for QR code detection
+        function scanQRCode() {
+            if (!scanning) return;
+            
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            requestAnimationFrame(function processFrame() {
+                if (!scanning) return;
+                
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: 'dontInvert'
+                    });
+                    
+                    if (code) {
+                        console.log('QR code found:', code.data);
+                        
+                        // Check if the QR code contains order data
+                        if (code.data.includes('Order #')) {
+                            // Extract order ID from the QR data
+                            const orderIdMatch = code.data.match(/Order #(\d+)/);
+                            if (orderIdMatch && orderIdMatch[1]) {
+                                const orderId = orderIdMatch[1];
+                                
+                                // For staff users, show the update form
+                                {% if user.is_staff %}
+                                    orderIdInput.value = orderId;
+                                    scanResultForm.classList.remove('d-none');
+                                    stopCameraBtn.click(); // Stop the camera
+                                {% else %}
+                                    // For customers or non-logged in users, redirect to order tracking
+                                    window.location.href = "/customer/orders/" + orderId + "/tracking/";
+                                {% endif %}
+                            }
+                        }
+                    }
+                }
+                
+                requestAnimationFrame(processFrame);
+            });
+        }
+        
+        // Location permissions and tracking (for staff updates)
+        {% if user.is_staff %}
+            const updateLocationCheckbox = document.getElementById('update-location');
+            const form = document.getElementById('scan-result-form');
+            
+            updateLocationCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // Ask for location permission
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            function(position) {
+                                // Success - add hidden fields to the form
+                                const latInput = document.createElement('input');
+                                latInput.type = 'hidden';
+                                latInput.name = 'latitude';
+                                latInput.value = position.coords.latitude;
+                                form.appendChild(latInput);
+                                
+                                const lngInput = document.createElement('input');
+                                lngInput.type = 'hidden';
+                                lngInput.name = 'longitude';
+                                lngInput.value = position.coords.longitude;
+                                form.appendChild(lngInput);
+                            },
+                            function(error) {
+                                console.error('Error getting location:', error);
+                                updateLocationCheckbox.checked = false;
+                                alert('Could not access your location. Location update will not be included.');
+                            }
+                        );
+                    } else {
+                        updateLocationCheckbox.checked = false;
+                        alert('Geolocation is not supported by your browser. Location update will not be included.');
+                    }
+                }
+            });
+            
+            // Form submission
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const orderId = orderIdInput.value;
+                const status = document.getElementById('status').value;
+                const notes = document.getElementById('notes').value;
+                
+                let url = '/customer/orders/' + orderId + '/update-status/';
+                let formData = new FormData();
+                formData.append('status', status);
+                formData.append('notes', notes);
+                
+                if (updateLocationCheckbox.checked) {
+                    const latInput = form.querySelector('input[name="latitude"]');
+                    const lngInput = form.querySelector('input[name="longitude"]');
+                    
+                    if (latInput && lngInput) {
+                        formData.append('latitude', latInput.value);
+                        formData.append('longitude', lngInput.value);
+                    }
+                }
+                
+                // Add CSRF token
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                
+                // Send AJAX request
+                fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Order status updated successfully!');
+                        window.location.href = '/customer/orders/' + orderId + '/tracking/';
+                    } else {
+                        alert('Error updating order status: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating the order status. Please try again.');
+                });
+            });
+        {% endif %}
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Procurement System - Home{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center min-vh-100">
+    <div class="col-md-6 text-center">
+        <div class="card shadow-lg">
+            <div class="card-body p-5">
+                <h1 class="display-5 fw-bold text-primary mb-4">Procurement System</h1>
+                <p class="lead mb-4">Manage your inventory, track suppliers, and get low stock notifications.</p>
+                
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                    </a>
+                {% else %}
+                    <a href="{% url 'admin:login' %}?next=/dashboard/" class="btn btn-primary btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

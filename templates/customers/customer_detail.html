@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ customer.name }} | ERP Shopping System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Customer Details</h1>
+        <div>
+            <a href="{% url 'customer-update' customer.id %}" class="btn btn-warning me-2">
+                <i class="fas fa-edit me-2"></i>Edit
+            </a>
+            <a href="{% url 'customer-list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Customers
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <span>Customer Information</span>
+                </div>
+                <div class="card-body">
+                    <div class="detail-section">
+                        <div class="detail-item">
+                            <div class="detail-label">Name:</div>
+                            <div class="detail-value">{{ customer.name }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Email:</div>
+                            <div class="detail-value">{{ customer.email }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Phone:</div>
+                            <div class="detail-value">{{ customer.phone }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Address:</div>
+                            <div class="detail-value">{{ customer.address }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Customer Since:</div>
+                            <div class="detail-value">{{ customer.created_at|date:"F d, Y" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Order History</span>
+                    <span class="badge bg-primary">{{ customer.total_orders }} Orders</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                    <td>${{ order.total_amount|floatformat:2 }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{% url 'order-detail' order.id %}" class="table-action-btn view" data-bs-toggle="tooltip" title="View Order">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No orders found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <span>Customer Stats</span>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="display-4 text-primary">{{ customer.loyalty_points }}</div>
+                        <div class="text-muted">Loyalty Points</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Total Orders:</div>
+                        <div class="detail-value">{{ customer.total_orders }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Total Spent:</div>
+                        <div class="detail-value">
+                            {% with spent=0 %}
+                                {% for order in orders %}
+                                    {% with spent=spent|add:order.total_amount %}
+                                    {% endwith %}
+                                {% endfor %}
+                                ${{ spent|floatformat:2 }}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Average Order Value:</div>
+                        <div class="detail-value">
+                            {% with spent=0 count=orders|length %}
+                                {% for order in orders %}
+                                    {% with spent=spent|add:order.total_amount %}
+                                    {% endwith %}
+                                {% endfor %}
+                                {% if count > 0 %}
+                                    ${{ spent|divisibleby:count|floatformat:2 }}
+                                {% else %}
+                                    $0.00
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Last Order:</div>
+                        <div class="detail-value">
+                            {% if orders %}
+                                {{ orders.0.created_at|date:"F d, Y" }}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span>Contact Information</span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-grid gap-2">
+                            <a href="mailto:{{ customer.email }}" class="btn btn-outline-primary">
+                                <i class="fas fa-envelope me-2"></i>Send Email
+                            </a>
+                            <a href="tel:{{ customer.phone }}" class="btn btn-outline-primary">
+                                <i class="fas fa-phone me-2"></i>Call
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if contact %}
+        CRM - {{ contact.first_name }} {{ contact.last_name }}
+    {% else %}
+        CRM - New Contact
+    {% endif %}
+{% endblock %}
+
+{% block authenticated_content %}
+<div class="container-fluid px-4">
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            {% if contact %}
+                Edit Contact
+            {% else %}
+                New Contact
+            {% endif %}
+        </h1>
+        {% if contact %}
+            <div>
+                <button type="button" class="btn btn-outline-danger"
+                        data-action="delete-contact" 
+                        data-id="{{ contact.id }}" 
+                        data-name="{{ contact.first_name }} {{ contact.last_name }}">
+                    <i class="fas fa-trash me-1"></i> Delete
+                </button>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="{% if contact %}col-lg-8{% else %}col-lg-12{% endif %}">
+            <!-- Contact form -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-body">
+                    <form id="contactForm" method="post" class="needs-validation" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                {{ form.first_name(class="form-control", id="first_name", required=True) }}
+                                <div class="invalid-feedback">First name is required.</div>
+                                {% for error in form.first_name.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                {{ form.last_name(class="form-control", id="last_name", required=True) }}
+                                <div class="invalid-feedback">Last name is required.</div>
+                                {% for error in form.last_name.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                {{ form.email(class="form-control", id="email", type="email") }}
+                                {% for error in form.email.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Phone</label>
+                                {{ form.phone(class="form-control", id="phone") }}
+                                {% for error in form.phone.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="company" class="form-label">Company</label>
+                                {{ form.company(class="form-control", id="company") }}
+                                {% for error in form.company.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="position" class="form-label">Position</label>
+                                {{ form.position(class="form-control", id="position") }}
+                                {% for error in form.position.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tags" class="form-label">Tags (comma separated)</label>
+                            {{ form.tags(class="form-control", id="tags", placeholder="client, prospect, vip, etc.") }}
+                            {% for error in form.tags.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            {{ form.notes(class="form-control", id="notes", rows="4") }}
+                            {% for error in form.notes.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {% if contact %}
+        <div class="col-lg-4">
+            <!-- Contact info and related data -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary bg-gradient rounded-circle p-3 text-white">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="mb-0">{{ contact.first_name }} {{ contact.last_name }}</h5>
+                            <p class="text-muted mb-0">{{ contact.position }}{% if contact.position and contact.company %} at {% endif %}{{ contact.company }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {% if contact.tags %}
+                            {% for tag in contact.tags.split(',') %}
+                                <span class="badge bg-secondary me-1">{{ tag.strip() }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <ul class="list-group list-group-flush">
+                        {% if contact.email %}
+                            <li class="list-group-item bg-transparent px-0">
+                                <i class="fas fa-envelope me-2"></i> {{ contact.email }}
+                            </li>
+                        {% endif %}
+                        {% if contact.phone %}
+                            <li class="list-group-item bg-transparent px-0">
+                                <i class="fas fa-phone me-2"></i> {{ contact.phone }}
+                            </li>
+                        {% endif %}
+                        {% if contact.last_contacted %}
+                            <li class="list-group-item bg-transparent px-0">
+                                <i class="fas fa-calendar me-2"></i> Last contacted: {{ contact.last_contacted.strftime('%b %d, %Y') }}
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="card-footer bg-transparent text-end">
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#activityModal">
+                        <i class="fas fa-plus me-1"></i> Log Activity
+                    </button>
+                </div>
+            </div>
+
+            <!-- Related leads -->
+            {% if leads %}
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Related Leads</h5>
+                        <span class="badge bg-primary">{{ leads|length }}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for lead in leads %}
+                                <a href="{{ url_for('edit_lead', lead_id=lead.id) }}" class="list-group-item list-group-item-action bg-transparent">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ lead.title }}</h6>
+                                        <span class="badge {% if lead.stage == 'Closed-Won' %}bg-success{% elif lead.stage == 'Closed-Lost' %}bg-danger{% else %}bg-primary{% endif %}">
+                                            {{ lead.stage }}
+                                        </span>
+                                    </div>
+                                    <p class="mb-1">
+                                        {% if lead.value %}
+                                            <strong>${{ '%0.2f'|format(lead.value|float) }}</strong> - 
+                                        {% endif %}
+                                        {{ lead.priority }} Priority
+                                    </p>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Related tasks -->
+            {% if tasks %}
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Related Tasks</h5>
+                        <span class="badge bg-primary">{{ tasks|length }}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for task in tasks %}
+                                <a href="{{ url_for('edit_task', task_id=task.id) }}" class="list-group-item list-group-item-action bg-transparent">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ task.title }}</h6>
+                                        <span class="badge {% if task.status == 'Completed' %}bg-success{% else %}bg-primary{% endif %}">
+                                            {{ task.status }}
+                                        </span>
+                                    </div>
+                                    <p class="mb-1">{{ task.task_type }}</p>
+                                    <small>
+                                        {% if task.due_date %}
+                                            <i class="far fa-calendar-alt me-1"></i> {{ task.due_date.strftime('%b %d, %Y') }}
+                                        {% endif %}
+                                    </small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Activity history -->
+            <div class="card border-0 shadow">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Activity History</h5>
+                    {% if activities %}
+                        <span class="badge bg-primary">{{ activities|length }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if activities %}
+                            {% for activity in activities %}
+                                <div class="list-group-item bg-transparent">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ activity.activity_type }}</h6>
+                                        <small class="text-muted">{{ activity.created_at.strftime('%b %d, %Y') }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ activity.description }}</p>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item bg-transparent text-center py-4">
+                                <p class="mb-0 text-muted">No activity history</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Hidden form for delete action -->
+    <form id="deleteContactForm" action="{{ url_for('delete_contact', contact_id=contact.id if contact else 0) }}" method="post" style="display: none;"></form>
+</div>
+
+<!-- Activity Modal -->
+{% if contact %}
+<div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Log Activity for {{ contact.first_name }} {{ contact.last_name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('log_activity') }}" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="activity_type" class="form-label">Activity Type</label>
+                        <select class="form-select" id="activity_type" name="activity_type" required>
+                            <option value="">-- Select Type --</option>
+                            <option value="Call">Call</option>
+                            <option value="Email">Email</option>
+                            <option value="Meeting">Meeting</option>
+                            <option value="Note">Note</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                    <input type="hidden" name="contact_id" value="{{ contact.id }}">
+                    <input type="hidden" name="lead_id" value="0">
+                    <input type="hidden" name="task_id" value="0">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Log Activity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/contacts.js') }}"></script>
+{% endblock %}

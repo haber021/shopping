@@ -1,0 +1,15 @@
+
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Order Status Update</h2>
+    <p>Dear {{ order.customer.name }},</p>
+    <p>Your order status has been updated to: <strong>{{ order.get_status_display }}</strong></p>
+    {% if order.status == 'SHIPPED' %}
+    <p><strong>Tracking Number:</strong> {{ order.tracking_number }}</p>
+    <p><strong>Delivery Partner:</strong> {{ order.delivery_partner }}</p>
+    {% endif %}
+    <p>Order Number: {{ order.order_number }}</p>
+    <p>You can track your order status in your account dashboard.</p>
+</body>
+</html>

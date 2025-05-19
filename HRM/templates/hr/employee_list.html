@@ -1,0 +1,356 @@
+{% extends 'hrm_base.html' %}
+
+{% block title %}Employees - HR Management{% endblock %}
+
+{% block header_title %}Employee Management{% endblock %}
+
+{% block header_buttons %}
+<a href="{% url 'hr:employee_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i> Add Employee
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card stat-card-primary">
+            <div class="card-body">
+                <h6 class="card-title text-muted mb-0">Total Employees</h6>
+                <div class="stat-number">{{ employees.paginator.count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card stat-card-success">
+            <div class="card-body">
+                <h6 class="card-title text-muted mb-0">Active Employees</h6>
+                <div class="stat-number">{{ employees.paginator.object_list|dictsortby:"status"|dictvalue:"status"|dictcount:"Active" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card stat-card-warning">
+            <div class="card-body">
+                <h6 class="card-title text-muted mb-0">On Leave</h6>
+                <div class="stat-number">{{ employees.paginator.object_list|dictsortby:"status"|dictvalue:"status"|dictcount:"On Leave" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card stat-card-danger">
+            <div class="card-body">
+                <h6 class="card-title text-muted mb-0">Departments</h6>
+                <div class="stat-number">{{ departments.count }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <form method="get" class="d-flex">
+                    <input type="text" name="q" value="{{ query }}" class="form-control me-2" placeholder="Search employees...">
+                    <select name="department" class="form-select me-2" style="width: auto;">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if department_id == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="status" class="form-select me-2" style="width: auto;">
+                        <option value="">All Statuses</option>
+                        {% for status_value, status_name in status_choices %}
+                        <option value="{{ status_value }}" {% if status == status_value %}selected{% endif %}>{{ status_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="btn-group">
+                    <a href="{% url 'hr:employees' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-sync-alt"></i> Reset
+                    </a>
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" id="exportCSV">Export to CSV</a></li>
+                        <li><a class="dropdown-item" href="#" id="printList">Print List</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Employee</th>
+                        <th>Department</th>
+                        <th>Position</th>
+                        <th>Status</th>
+                        <th>Contact</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if employees %}
+                        {% for employee in employees %}
+                        <tr>
+                            <td>{{ employee.employee_id }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="employee-avatar me-2">
+                                        {{ employee.first_name|first }}{{ employee.last_name|first }}
+                                    </div>
+                                    <div>
+                                        <a href="{% url 'hr:employee_detail' employee.id %}" class="text-decoration-none">
+                                            {{ employee.first_name }} {{ employee.last_name }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ employee.department.name|default:"Not Assigned" }}</td>
+                            <td>{{ employee.position.title|default:"Not Assigned" }}</td>
+                            <td>
+                                {% if employee.status == 'Active' %}
+                                <span class="badge bg-success">{{ employee.status }}</span>
+                                {% elif employee.status == 'On Leave' %}
+                                <span class="badge bg-warning">{{ employee.status }}</span>
+                                {% elif employee.status == 'Terminated' %}
+                                <span class="badge bg-danger">{{ employee.status }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ employee.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div><small>{{ employee.email }}</small></div>
+                                <div><small>{{ employee.phone }}</small></div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'hr:employee_detail' employee.id %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'hr:employee_update' employee.id %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'hr:employee_delete' employee.id %}" class="btn btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="fas fa-search fa-2x mb-3"></i>
+                                    <p>No employees found matching your criteria.</p>
+                                    <a href="{% url 'hr:employees' %}" class="btn btn-sm btn-outline-primary">Clear Filters</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <small class="text-muted">Showing {{ employees.start_index }} to {{ employees.end_index }} of {{ employees.paginator.count }} employees</small>
+            </div>
+            <div class="col-md-6">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-end mb-0">
+                        {% if employees.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}{% if department_id %}&department={{ department_id }}{% endif %}{% if status %}&status={{ status }}{% endif %}" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ employees.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if department_id %}&department={{ department_id }}{% endif %}{% if status %}&status={{ status }}{% endif %}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo;&laquo;</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo;</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in employees.paginator.page_range %}
+                            {% if employees.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > employees.number|add:'-3' and num < employees.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if department_id %}&department={{ department_id }}{% endif %}{% if status %}&status={{ status }}{% endif %}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if employees.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ employees.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if department_id %}&department={{ department_id }}{% endif %}{% if status %}&status={{ status }}{% endif %}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ employees.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if department_id %}&department={{ department_id }}{% endif %}{% if status %}&status={{ status }}{% endif %}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&raquo;</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">&raquo;&raquo;</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Employee Distribution by Department</span>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary">
+                        <i class="fas fa-chart-pie"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary">
+                        <i class="fas fa-chart-bar"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="departmentDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Recent HR Activities</span>
+                <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">New employee hired</h6>
+                            <small>3 days ago</small>
+                        </div>
+                        <p class="mb-1">Sarah Johnson joined the Marketing team as Content Specialist.</p>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Position updated</h6>
+                            <small>1 week ago</small>
+                        </div>
+                        <p class="mb-1">James Wilson promoted from Sales Associate to Sales Manager.</p>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Department restructured</h6>
+                            <small>2 weeks ago</small>
+                        </div>
+                        <p class="mb-1">Operations department divided into Warehouse and Logistics.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">Our Team</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-4">
+                        <img src="https://pixabay.com/get/g4233787b33f1551d460ac8f926710e5bd6b1c362fab48e15f8bdaf4011d75461fd59c21bac743c4f75f0d918a9be205c4cb0e9581b6d0f3d45c582b6a2d8a513_1280.jpg" alt="Retail Team" class="img-fluid rounded">
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <img src="https://pixabay.com/get/g16ed3ff32d0c9ea0dcd565d2aad44151a5808ec14855462a2f5e90c3db9e0cceba597dffaa92e7e03812688d961d0a63bd61c0272ef0b449e8ff205bd30ef084_1280.jpg" alt="Retail Staff" class="img-fluid rounded">
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <img src="https://pixabay.com/get/g802fd4e231c7cc6e6d76a345147e7443771006ae0050d42427e781926308856a6e760ef6a543a0d2da1adb9c48cd031a8d7732a6de0cba363ab51d903dbff724_1280.jpg" alt="Store Employees" class="img-fluid rounded">
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <img src="https://pixabay.com/get/gb0fa45628a7ea99e9fd7ec0b7b2c7eb9ab1ce5ab71581c2e13f5349a4f338e2fadb9d72b9c7ee0ef2f8be283bb4736170d6ec46a6d5310566031ad7edb268ce7_1280.jpg" alt="Retail Management" class="img-fluid rounded">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Department Distribution Chart
+        const deptChartElement = document.getElementById('departmentDistributionChart');
+        if (deptChartElement) {
+            const deptChart = new Chart(deptChartElement, {
+                type: 'pie',
+                data: {
+                    labels: ['Sales', 'Marketing', 'IT', 'Operations', 'Finance', 'HR', 'Warehouse'],
+                    datasets: [{
+                        data: [25, 15, 12, 18, 10, 8, 12],
+                        backgroundColor: [
+                            'rgba(13, 110, 253, 0.8)',
+                            'rgba(220, 53, 69, 0.8)',
+                            'rgba(40, 167, 69, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(111, 66, 193, 0.8)',
+                            'rgba(23, 162, 184, 0.8)',
+                            'rgba(108, 117, 125, 0.8)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} employees`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

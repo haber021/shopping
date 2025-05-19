@@ -1,0 +1,631 @@
+{% extends 'hrm_base.html' %}
+
+{% block title %}{{ employee.get_full_name }} - Employee Details{% endblock %}
+
+{% block header_title %}Employee Details{% endblock %}
+
+{% block header_buttons %}
+<a href="{% url 'hr:employees' %}" class="btn btn-outline-secondary me-2">
+    <i class="fas fa-arrow-left me-2"></i> Back to Employees
+</a>
+<a href="{% url 'hr:employee_update' employee.id %}" class="btn btn-primary me-2">
+    <i class="fas fa-edit me-2"></i> Edit
+</a>
+<div class="btn-group">
+    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-ellipsis-v"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="#" id="printProfile"><i class="fas fa-print me-2"></i> Print Profile</a></li>
+        <li><a class="dropdown-item" href="#" id="exportPDF"><i class="fas fa-file-pdf me-2"></i> Export to PDF</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item text-danger" href="{% url 'hr:employee_delete' employee.id %}"><i class="fas fa-trash me-2"></i> Delete Employee</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Employee Basic Info Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="employee-avatar-lg mb-3">
+                    {{ employee.first_name|first }}{{ employee.last_name|first }}
+                </div>
+                <h4 class="card-title">{{ employee.get_full_name }}</h4>
+                <h6 class="card-subtitle mb-2 text-muted">{{ employee.position.title|default:"No Position" }}</h6>
+                <p class="mb-1"><i class="fas fa-id-badge me-2"></i> {{ employee.employee_id }}</p>
+                
+                {% if employee.status == 'Active' %}
+                <span class="badge bg-success py-2 px-3 my-2">{{ employee.status }}</span>
+                {% elif employee.status == 'On Leave' %}
+                <span class="badge bg-warning py-2 px-3 my-2">{{ employee.status }}</span>
+                {% elif employee.status == 'Terminated' %}
+                <span class="badge bg-danger py-2 px-3 my-2">{{ employee.status }}</span>
+                {% else %}
+                <span class="badge bg-secondary py-2 px-3 my-2">{{ employee.status }}</span>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <div class="d-flex justify-content-center">
+                        <a href="mailto:{{ employee.email }}" class="btn btn-sm btn-outline-primary me-2">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                        <a href="tel:{{ employee.phone }}" class="btn btn-sm btn-outline-primary me-2">
+                            <i class="fas fa-phone"></i>
+                        </a>
+                        <a href="{% url 'hr:employee_update' employee.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="list-group list-group-flush">
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Department:</small>
+                        <span>{{ employee.department.name|default:"Not Assigned" }}</span>
+                    </div>
+                </div>
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Manager:</small>
+                        <span>{{ employee.manager.get_full_name|default:"None" }}</span>
+                    </div>
+                </div>
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Hire Date:</small>
+                        <span>{{ employee.hire_date|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Email:</small>
+                        <span>{{ employee.email }}</span>
+                    </div>
+                </div>
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Phone:</small>
+                        <span>{{ employee.phone }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Employee Details Tabs -->
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="employeeTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="true">Personal Details</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance" type="button" role="tab" aria-controls="attendance" aria-selected="false">Attendance</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button" role="tab" aria-controls="schedule" aria-selected="false">Schedule</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="leave-tab" data-bs-toggle="tab" data-bs-target="#leave" type="button" role="tab" aria-controls="leave" aria-selected="false">Leave</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab" aria-controls="documents" aria-selected="false">Documents</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="employeeTabsContent">
+                    <!-- Personal Details Tab -->
+                    <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3">Personal Information</h6>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Date of Birth:</label>
+                                    <p>{{ employee.date_of_birth|date:"M d, Y"|default:"Not provided" }}</p>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Gender:</label>
+                                    <p>{{ employee.gender|default:"Not provided" }}</p>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Address:</label>
+                                    <p>{{ employee.address|default:"Not provided"|linebreaksbr }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3">Emergency Contact</h6>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Name:</label>
+                                    <p>{{ employee.emergency_contact_name|default:"Not provided" }}</p>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Phone:</label>
+                                    <p>{{ employee.emergency_contact_phone|default:"Not provided" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3">Employment Information</h6>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Employee ID:</label>
+                                    <p>{{ employee.employee_id }}</p>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Hire Date:</label>
+                                    <p>{{ employee.hire_date|date:"M d, Y" }}</p>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Department:</label>
+                                    <p>{{ employee.department.name|default:"Not assigned" }}</p>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Position:</label>
+                                    <p>{{ employee.position.title|default:"Not assigned" }}</p>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Manager:</label>
+                                    <p>{{ employee.manager.get_full_name|default:"None" }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3">Account Information</h6>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">User Account:</label>
+                                    <p>{% if employee.user %}Active{% else %}Not linked{% endif %}</p>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Username:</label>
+                                    <p>{{ employee.user.username|default:"No user account" }}</p>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-0">Last Login:</label>
+                                    <p>{{ employee.user.last_login|date:"M d, Y H:i"|default:"Never" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Attendance Tab -->
+                    <div class="tab-pane fade" id="attendance" role="tabpanel" aria-labelledby="attendance-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold">Recent Attendance</h6>
+                            <a href="{% url 'hr:attendance' %}?employee={{ employee.id }}" class="btn btn-sm btn-outline-primary">
+                                View All Attendance
+                            </a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Time In</th>
+                                        <th>Time Out</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if recent_attendance %}
+                                        {% for record in recent_attendance %}
+                                        <tr>
+                                            <td>{{ record.date|date:"M d, Y" }}</td>
+                                            <td>
+                                                {% if record.status == 'Present' %}
+                                                <span class="attendance-status-present">{{ record.status }}</span>
+                                                {% elif record.status == 'Late' %}
+                                                <span class="attendance-status-late">{{ record.status }}</span>
+                                                {% elif record.status == 'Absent' %}
+                                                <span class="attendance-status-absent">{{ record.status }}</span>
+                                                {% elif record.status == 'Half Day' %}
+                                                <span class="attendance-status-half-day">{{ record.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ record.time_in|time:"g:i A"|default:"-" }}</td>
+                                            <td>{{ record.time_out|time:"g:i A"|default:"-" }}</td>
+                                            <td>{{ record.notes|truncatechars:30|default:"-" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">No attendance records found</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4">
+                            <h6 class="fw-bold mb-3">Record New Attendance</h6>
+                            <form action="{% url 'hr:attendance' %}" method="post" class="row g-3">
+                                {% csrf_token %}
+                                <input type="hidden" name="employee" value="{{ employee.id }}">
+                                <input type="hidden" name="single_attendance" value="1">
+                                
+                                <div class="col-md-3">
+                                    <label class="form-label">Date</label>
+                                    <input type="date" name="date" class="form-control" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Status</label>
+                                    <select name="status" class="form-select" required>
+                                        <option value="Present">Present</option>
+                                        <option value="Late">Late</option>
+                                        <option value="Absent">Absent</option>
+                                        <option value="Half Day">Half Day</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Time In</label>
+                                    <input type="time" name="time_in" class="form-control">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Time Out</label>
+                                    <input type="time" name="time_out" class="form-control">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Notes</label>
+                                    <textarea name="notes" class="form-control" rows="2"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Record Attendance</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Schedule Tab -->
+                    <div class="tab-pane fade" id="schedule" role="tabpanel" aria-labelledby="schedule-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold">Upcoming Schedule</h6>
+                            <a href="{% url 'hr:schedule' %}?employee={{ employee.id }}" class="btn btn-sm btn-outline-primary">
+                                View Full Schedule
+                            </a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Shift Type</th>
+                                        <th>Time</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if upcoming_schedules %}
+                                        {% for schedule in upcoming_schedules %}
+                                        <tr>
+                                            <td>{{ schedule.date|date:"M d, Y" }} ({{ schedule.date|date:"D" }})</td>
+                                            <td>
+                                                {% if schedule.shift_type == 'Morning' %}
+                                                <span class="badge bg-success">{{ schedule.shift_type }}</span>
+                                                {% elif schedule.shift_type == 'Afternoon' %}
+                                                <span class="badge bg-primary">{{ schedule.shift_type }}</span>
+                                                {% elif schedule.shift_type == 'Evening' %}
+                                                <span class="badge bg-info">{{ schedule.shift_type }}</span>
+                                                {% elif schedule.shift_type == 'Night' %}
+                                                <span class="badge bg-secondary">{{ schedule.shift_type }}</span>
+                                                {% else %}
+                                                <span class="badge bg-warning">{{ schedule.shift_type }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ schedule.start_time|time:"g:i A" }} - {{ schedule.end_time|time:"g:i A" }}</td>
+                                            <td>{{ schedule.notes|truncatechars:30|default:"-" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center">No upcoming schedules found</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4">
+                            <h6 class="fw-bold mb-3">Add New Schedule</h6>
+                            <form action="{% url 'hr:schedule' %}" method="post" class="row g-3">
+                                {% csrf_token %}
+                                <input type="hidden" name="employee" value="{{ employee.id }}">
+                                <input type="hidden" name="single_schedule" value="1">
+                                
+                                <div class="col-md-4">
+                                    <label class="form-label">Date</label>
+                                    <input type="date" name="date" class="form-control" required>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label">Shift Type</label>
+                                    <select name="shift_type" class="form-select" required>
+                                        <option value="Morning">Morning Shift</option>
+                                        <option value="Afternoon">Afternoon Shift</option>
+                                        <option value="Evening">Evening Shift</option>
+                                        <option value="Night">Night Shift</option>
+                                        <option value="Custom">Custom Hours</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Start Time</label>
+                                    <input type="time" name="start_time" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">End Time</label>
+                                    <input type="time" name="end_time" class="form-control" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Notes</label>
+                                    <textarea name="notes" class="form-control" rows="2"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Add Schedule</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Leave Tab -->
+                    <div class="tab-pane fade" id="leave" role="tabpanel" aria-labelledby="leave-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold">Leave Records</h6>
+                            <a href="{% url 'hr:leave' %}?employee={{ employee.id }}" class="btn btn-sm btn-outline-primary">
+                                View All Leave
+                            </a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Period</th>
+                                        <th>Days</th>
+                                        <th>Status</th>
+                                        <th>Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if leaves %}
+                                        {% for leave in leaves %}
+                                        <tr>
+                                            <td>{{ leave.leave_type }}</td>
+                                            <td>
+                                                {{ leave.start_date|date:"M d, Y" }}
+                                                {% if leave.start_date != leave.end_date %}
+                                                    to {{ leave.end_date|date:"M d, Y" }}
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ leave.end_date|timeuntil:leave.start_date|default:"1 day" }}</td>
+                                            <td>
+                                                {% if leave.status == 'Pending' %}
+                                                <span class="leave-status-pending">{{ leave.status }}</span>
+                                                {% elif leave.status == 'Approved' %}
+                                                <span class="leave-status-approved">{{ leave.status }}</span>
+                                                {% elif leave.status == 'Rejected' %}
+                                                <span class="leave-status-rejected">{{ leave.status }}</span>
+                                                {% else %}
+                                                <span class="text-muted">{{ leave.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ leave.reason|truncatechars:30|default:"-" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">No leave records found</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4">
+                            <h6 class="fw-bold mb-3">Apply for Leave</h6>
+                            <form action="{% url 'hr:leave' %}" method="post" class="row g-3">
+                                {% csrf_token %}
+                                <input type="hidden" name="employee" value="{{ employee.id }}">
+                                
+                                <div class="col-md-4">
+                                    <label class="form-label">Leave Type</label>
+                                    <select name="leave_type" class="form-select" required>
+                                        <option value="Vacation">Vacation</option>
+                                        <option value="Sick">Sick Leave</option>
+                                        <option value="Personal">Personal Leave</option>
+                                        <option value="Maternity">Maternity Leave</option>
+                                        <option value="Paternity">Paternity Leave</option>
+                                        <option value="Bereavement">Bereavement Leave</option>
+                                        <option value="Unpaid">Unpaid Leave</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="date" name="start_date" class="form-control" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">End Date</label>
+                                    <input type="date" name="end_date" class="form-control" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Reason</label>
+                                    <textarea name="reason" class="form-control" rows="3" required></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Submit Leave Request</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Documents Tab -->
+                    <div class="tab-pane fade" id="documents" role="tabpanel" aria-labelledby="documents-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold">Employee Documents</h6>
+                            <a href="{% url 'hr:documents' %}?employee={{ employee.id }}" class="btn btn-sm btn-outline-primary">
+                                View All Documents
+                            </a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Document</th>
+                                        <th>Type</th>
+                                        <th>Uploaded</th>
+                                        <th>Expires</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if documents %}
+                                        {% for document in documents %}
+                                        <tr>
+                                            <td>{{ document.title }}</td>
+                                            <td>
+                                                <span class="document-type-badge document-type-{{ document.document_type }}">
+                                                    {{ document.document_type }}
+                                                </span>
+                                            </td>
+                                            <td>{{ document.upload_date|date:"M d, Y" }}</td>
+                                            <td>
+                                                {% if document.expiry_date %}
+                                                    {{ document.expiry_date|date:"M d, Y" }}
+                                                    {% if document.expiry_date < today %}
+                                                        <span class="badge bg-danger">Expired</span>
+                                                    {% elif document.expiry_date < thirty_days_later %}
+                                                        <span class="badge bg-warning">Expiring soon</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ document.file_path }}" class="btn btn-outline-primary" target="_blank">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'hr:document_delete' document.id %}" class="btn btn-outline-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">No documents found</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4">
+                            <h6 class="fw-bold mb-3">Upload New Document</h6>
+                            <form action="{% url 'hr:documents' %}" method="post" class="row g-3" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" name="employee" value="{{ employee.id }}">
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Document Title</label>
+                                    <input type="text" name="title" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Document Type</label>
+                                    <select name="document_type" class="form-select" required>
+                                        <option value="Resume">Resume</option>
+                                        <option value="ID">Identification</option>
+                                        <option value="Certificate">Certificate</option>
+                                        <option value="Contract">Employment Contract</option>
+                                        <option value="Performance">Performance Review</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">File Path</label>
+                                    <input type="text" name="file_path" class="form-control" required>
+                                    <small class="text-muted">Enter the file path where the document is stored</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Expiry Date (if applicable)</label>
+                                    <input type="date" name="expiry_date" class="form-control">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Description</label>
+                                    <textarea name="description" class="form-control" rows="2"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Upload Document</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Subordinates Card (if manager) -->
+    {% if employee.subordinates.all %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">Team Members</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for subordinate in employee.subordinates.all %}
+                    <a href="{% url 'hr:employee_detail' subordinate.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex align-items-center">
+                            <div class="employee-avatar me-3">
+                                {{ subordinate.first_name|first }}{{ subordinate.last_name|first }}
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ subordinate.get_full_name }}</h6>
+                                <small class="text-muted">{{ subordinate.position.title|default:"No Position" }}</small>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Department Card -->
+    {% if employee.department %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">Department: {{ employee.department.name }}</h6>
+            </div>
+            <div class="card-body">
+                <p>{{ employee.department.description|default:"No description available" }}</p>
+                {% if employee.department.manager %}
+                <div class="mt-3">
+                    <h6>Department Manager:</h6>
+                    <div class="d-flex align-items-center mt-2">
+                        <div class="employee-avatar me-3">
+                            {{ employee.department.manager.first_name|first }}{{ employee.department.manager.last_name|first }}
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ employee.department.manager.get_full_name }}</h6>
+                            <small class="text-muted">{{ employee.department.manager.email }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="mt-3">
+                    <h6>Department Colleagues:</h6>
+                    {% with colleagues=employee.department.employees.all %}
+                    <p>{{ colleagues.count }} employees in this department</p>
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

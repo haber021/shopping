@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block title %}About Us{% endblock %}
+
+{% block content %}
+<div class="about-page">
+    <div class="about-header">
+        <h1 class="main-title">Seamless Operations, Simplified: Your All-in-One Retail ERP</h1>
+    </div>
+    
+    <div class="about-content">
+        <div class="about-image">
+            <div class="image-circle">
+                <!-- SVG illustration of retail warehouse/checkout -->
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="100" cy="100" r="90" fill="#e0f2fe" />
+                    <!-- Simple storefront illustration -->
+                    <rect x="40" y="70" width="120" height="80" fill="#4b5563" />
+                    <rect x="50" y="80" width="40" height="40" fill="#93c5fd" />
+                    <rect x="110" y="80" width="40" height="40" fill="#93c5fd" />
+                    <rect x="60" y="130" width="80" height="20" fill="#bfdbfe" />
+                    <polygon points="40,70 100,40 160,70" fill="#1e40af" />
+                    <!-- Simplified shopping cart -->
+                    <circle cx="65" cy="170" r="5" fill="#1e293b" />
+                    <circle cx="85" cy="170" r="5" fill="#1e293b" />
+                    <rect x="60" y="155" width="30" height="15" fill="#60a5fa" stroke="#1e293b" stroke-width="2" />
+                    <line x1="60" y1="160" x2="55" y2="170" stroke="#1e293b" stroke-width="2" />
+                </svg>
+            </div>
+        </div>
+        
+        <div class="about-info">
+            <div class="about-us-section">
+                <h2>About Us</h2>
+                <p>
+                    Online Retail ERP is an all-in-one enterprise resource planning solution designed specifically for retail businesses. 
+                    Our system streamlines your operations by integrating key business processes into a single, user-friendly platform.
+                </p>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Comprehensive order management</li>
+                    <li><i class="fas fa-check-circle"></i> Real-time inventory tracking</li>
+                    <li><i class="fas fa-check-circle"></i> Automated procurement processes</li>
+                    <li><i class="fas fa-check-circle"></i> Customer relationship management</li>
+                    <li><i class="fas fa-check-circle"></i> Integrated payroll and HR functions</li>
+                    <li><i class="fas fa-check-circle"></i> Insightful analytics and reporting</li>
+                </ul>
+            </div>
+            
+            <div class="contact-info-section">
+                <h2>Contact Information</h2>
+                <div class="contact-details">
+                    <p><i class="fas fa-envelope"></i> <span>Email:</span> info@retailerp.com</p>
+                    <p><i class="fas fa-globe"></i> <span>Website:</span> www.retailerp.com</p>
+                    <p><i class="fas fa-phone"></i> <span>Phone:</span> +1 (555) 123-4567</p>
+                    <p><i class="fas fa-map-marker-alt"></i> <span>Address:</span> 123 Business Avenue, Tech City, TC 54321</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

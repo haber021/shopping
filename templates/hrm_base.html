@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Retail ERP System{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        /* Sidebar styles */
+        .sidebar {
+            min-height: 100vh;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            background-color: #f8f9fa;
+        }
+        
+        .sidebar .nav-link {
+            color: #333;
+            padding: .75rem 1rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: #e9ecef;
+        }
+        
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: #0d6efd;
+        }
+        
+        .sidebar .nav-link i {
+            width: 1.5rem;
+            text-align: center;
+            margin-right: 0.5rem;
+        }
+        
+        /* Header styles */
+        .main-header {
+            background-color: #fff;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        /* Content styles */
+        .main-content {
+            padding: 1.5rem;
+            background-color: #f5f5f5;
+        }
+        
+        /* Employee avatar */
+        .employee-avatar {
+            width: 36px;
+            height: 36px;
+            background-color: #6c757d;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        /* Card styles */
+        .hr-card {
+            transition: all 0.3s;
+            border: 1px solid rgba(0,0,0,.125);
+        }
+        
+        .hr-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Stats card */
+        .stat-card {
+            border-radius: 0.5rem;
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        
+        .stat-card .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .stat-card-primary {
+            border-left: 5px solid #0d6efd;
+        }
+        
+        .stat-card-success {
+            border-left: 5px solid #198754;
+        }
+        
+        .stat-card-warning {
+            border-left: 5px solid #ffc107;
+        }
+        
+        .stat-card-danger {
+            border-left: 5px solid #dc3545;
+        }
+        
+        .stat-card-info {
+            border-left: 5px solid #0dcaf0;
+        }
+        
+        .stat-card-secondary {
+            border-left: 5px solid #6c757d;
+        }
+        
+        /* Status badges */
+        .leave-status-pending {
+            color: #856404;
+            background-color: #fff3cd;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .leave-status-approved {
+            color: #155724;
+            background-color: #d4edda;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .leave-status-rejected {
+            color: #721c24;
+            background-color: #f8d7da;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Document type badges */
+        .document-type-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .document-type-ID {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+        
+        .document-type-Resume {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+        
+        .document-type-Contract {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+        
+        .document-type-Certificate {
+            background-color: #fff3cd;
+            color: #664d03;
+        }
+        
+        .document-type-Performance {
+            background-color: #e2e3e5;
+            color: #41464b;
+        }
+        
+        .document-type-Other {
+            background-color: #d3d3d4;
+            color: #1f1f1f;
+        }
+        
+        /* Schedule calendar */
+        .calendar-day {
+            height: 120px;
+            vertical-align: top;
+            padding: 5px;
+        }
+        
+        .calendar-event {
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 col-lg-2 px-0 sidebar position-fixed">
+                <div class="p-3 text-center">
+                    <h3 class="fs-4 fw-bold">Retail ERP</h3>
+                    <p class="text-muted small">HR Management System</p>
+                </div>
+                <hr>
+                <ul class="nav flex-column px-3">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'shop:dashboard' %}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/hr/employees' in request.path %}active{% endif %}" href="{% url 'hr:employees' %}">
+                            <i class="fas fa-users"></i> Employees
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/hr/attendance' in request.path %}active{% endif %}" href="{% url 'hr:attendance' %}">
+                            <i class="fas fa-calendar-check"></i> Attendance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/hr/schedule' in request.path %}active{% endif %}" href="{% url 'hr:schedule' %}">
+                            <i class="fas fa-calendar-alt"></i> Schedule
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/hr/leave' in request.path %}active{% endif %}" href="{% url 'hr:leave' %}">
+                            <i class="fas fa-plane-departure"></i> Leave
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/hr/recruitment' in request.path %}active{% endif %}" href="{% url 'hr:recruitment' %}">
+                            <i class="fas fa-user-plus"></i> Recruitment
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/hr/documents' in request.path %}active{% endif %}" href="{% url 'hr:documents' %}">
+                            <i class="fas fa-file-alt"></i> Documents
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/hr/departments' in request.path %}active{% endif %}" href="{% url 'hr:departments' %}">
+                            <i class="fas fa-building"></i> Departments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/hr/positions' in request.path %}active{% endif %}" href="{% url 'hr:positions' %}">
+                            <i class="fas fa-id-badge"></i> Positions
+                        </a>
+                    </li>
+                    <hr>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/retail' in request.path %}active{% endif %}" href="{% url 'hr_dashboard:dashboard' %}">
+                            <i class="fas fa-store"></i> Retail Management
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Main content -->
+            <div class="col-md-10 ms-auto">
+                <!-- Header -->
+                <header class="main-header p-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">{% block header_title %}Dashboard{% endblock %}</h1>
+                    </div>
+                    <div>
+                        {% block header_buttons %}{% endblock %}
+                    </div>
+                </header>
+                
+                <!-- Page content -->
+                <main class="main-content">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% block content %}{% endblock %}
+                </main>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap 5 JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

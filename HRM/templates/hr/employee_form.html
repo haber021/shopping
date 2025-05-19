@@ -1,0 +1,132 @@
+{% extends 'hrm_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header_title %}{{ title }}{% endblock %}
+
+{% block header_buttons %}
+<a href="{% url 'hr:employees' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i> Back to Employees
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ title }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" class="row g-3">
+                    {% csrf_token %}
+                    
+                    <div class="col-md-4">
+                        {{ form.employee_id|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.first_name|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.last_name|as_crispy_field }}
+                    </div>
+                    
+                    <hr>
+                    <h6 class="mb-3">Contact Information</h6>
+                    
+                    <div class="col-md-6">
+                        {{ form.email|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.phone|as_crispy_field }}
+                    </div>
+                    <div class="col-12">
+                        {{ form.address|as_crispy_field }}
+                    </div>
+                    
+                    <hr>
+                    <h6 class="mb-3">Employment Details</h6>
+                    
+                    <div class="col-md-4">
+                        {{ form.hire_date|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.department|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.position|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.manager|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.status|as_crispy_field }}
+                    </div>
+                    
+                    <hr>
+                    <h6 class="mb-3">Personal Information</h6>
+                    
+                    <div class="col-md-4">
+                        {{ form.gender|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.date_of_birth|as_crispy_field }}
+                    </div>
+                    
+                    <hr>
+                    <h6 class="mb-3">Emergency Contact</h6>
+                    
+                    <div class="col-md-6">
+                        {{ form.emergency_contact_name|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.emergency_contact_phone|as_crispy_field }}
+                    </div>
+                    
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            {% if employee %}Update Employee{% else %}Create Employee{% endif %}
+                        </button>
+                        <a href="{% url 'hr:employees' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Dynamic form handling for department and position selection
+    document.addEventListener('DOMContentLoaded', function() {
+        const departmentSelect = document.getElementById('id_department');
+        const positionSelect = document.getElementById('id_position');
+        
+        if (departmentSelect && positionSelect) {
+            departmentSelect.addEventListener('change', function() {
+                const departmentId = this.value;
+                
+                // Clear current positions
+                positionSelect.innerHTML = '<option value="">---------</option>';
+                
+                if (departmentId) {
+                    // Fetch positions for the selected department
+                    fetch(`/hr/api/positions/?department=${departmentId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            data.forEach(position => {
+                                const option = document.createElement('option');
+                                option.value = position.id;
+                                option.textContent = position.title;
+                                positionSelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => console.error('Error fetching positions:', error));
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

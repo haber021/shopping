@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Product Detail - Retail ERP System{% endblock %}
+
+{% block header_title %}Product Detail{% endblock %}
+
+{% block header_buttons %}
+<div class="btn-group">
+    <a href="{% url 'retail:products' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i> Back to Products
+    </a>
+    <a href="{% url 'retail:product_edit' product_id %}" class="btn btn-outline-primary">
+        <i class="fas fa-edit me-2"></i> Edit Product
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Product Image -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="mb-3" style="height: 250px; display: flex; align-items: center; justify-content: center; background-color: #f8f9fa;">
+                    <i class="fas fa-image fa-5x text-muted"></i>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-upload me-2"></i> Upload Image
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Information -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Product Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">Product Name:</h6>
+                        <p class="mb-0">Product Name Placeholder</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">SKU:</h6>
+                        <p class="mb-0">SKU Placeholder</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">Category:</h6>
+                        <p class="mb-0">Category Placeholder</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">Status:</h6>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">Price:</h6>
+                        <p class="mb-0">$0.00</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">Cost:</h6>
+                        <p class="mb-0">$0.00</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">Profit Margin:</h6>
+                        <p class="mb-0">0%</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">Created:</h6>
+                        <p class="mb-0">Date Placeholder</p>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Description:</h6>
+                    <p class="mb-0">Description placeholder text</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inventory Information -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Inventory Information</h5>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#adjustStockModal">
+                    <i class="fas fa-plus me-2"></i> Adjust Stock
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-1">Current Stock:</h6>
+                        <p class="mb-0">0 units</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-1">Reorder Level:</h6>
+                        <p class="mb-0">0 units</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-1">Last Restock:</h6>
+                        <p class="mb-0">Never</p>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Stock Status:</h6>
+                    <span class="badge bg-danger">Out of Stock</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Adjust Stock Modal -->
+<div class="modal fade" id="adjustStockModal" tabindex="-1" aria-labelledby="adjustStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="adjustStockModalLabel">Adjust Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="#">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Adjustment Type</label>
+                        <select name="adjustment_type" class="form-select">
+                            <option value="add">Add Stock</option>
+                            <option value="remove">Remove Stock</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" name="quantity" class="form-control" min="1" value="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <textarea name="reason" class="form-control" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

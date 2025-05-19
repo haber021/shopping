@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Shipping Settings{% endblock %}
+
+{% block header_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{% url 'shop:settings_general' %}" class="list-group-item list-group-item-action {% if active_tab == 'general' %}active{% endif %}">
+                            <i class="fas fa-cog me-2"></i> General
+                        </a>
+                        <a href="{% url 'shop:settings_payment' %}" class="list-group-item list-group-item-action {% if active_tab == 'payment' %}active{% endif %}">
+                            <i class="fas fa-credit-card me-2"></i> Payment
+                        </a>
+                        <a href="{% url 'shop:settings_shipping' %}" class="list-group-item list-group-item-action {% if active_tab == 'shipping' %}active{% endif %}">
+                            <i class="fas fa-truck me-2"></i> Shipping
+                        </a>
+                        <a href="{% url 'shop:settings_users' %}" class="list-group-item list-group-item-action {% if active_tab == 'users' %}active{% endif %}">
+                            <i class="fas fa-users-cog me-2"></i> User Management
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Shipping Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <h6 class="mb-3 text-muted">Shipping Methods</h6>
+                        
+                        {{ form.shipping_methods|as_crispy_field }}
+                        
+                        <h6 class="mb-3 text-muted">Shipping Costs</h6>
+                        
+                        {{ form.default_shipping_fee|as_crispy_field }}
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            The default shipping fee will be applied to all orders unless specified otherwise.
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

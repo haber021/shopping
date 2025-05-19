@@ -1,0 +1,57 @@
+<header class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{% block header_title %}Dashboard{% endblock %}</h1>
+    
+    <div class="d-flex align-items-center">
+        <!-- Search Bar -->
+        <form class="me-3 d-none d-md-flex" action="{% block search_url %}{% endblock %}" method="GET">
+            <div class="input-group">
+                <input type="text" class="form-control" name="search" placeholder="Search..." 
+                       value="{{ search_query|default:'' }}">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+        
+        <!-- Notifications -->
+        <div class="dropdown me-3">
+            <a class="btn btn-outline-secondary position-relative" href="#" role="button" id="notificationsDropdown" 
+               data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-bell"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {{ low_stock_count|default:'0' }}
+                </span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
+                <li><a class="dropdown-item" href="{% url 'shop:inventory_list' %}?filter=low_stock">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    {{ low_stock_count|default:'0' }} products with low stock
+                </a></li>
+                <li><a class="dropdown-item" href="{% url 'shop:order_list' %}?status=pending">
+                    <i class="fas fa-clock text-info me-2"></i>
+                    {{ pending_orders|default:'0' }} pending orders
+                </a></li>
+            </ul>
+        </div>
+        
+        <!-- User Profile -->
+        <div class="dropdown">
+            <a class="btn btn-outline-secondary dropdown-toggle" href="#" role="button" id="userDropdown" 
+               data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-user me-1"></i>
+                {{ request.user.username }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li><a class="dropdown-item" href="{% url 'admin:index' %}">
+                    <i class="fas fa-user-cog me-2"></i>
+                    Profile Settings
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'admin:logout' %}">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    Logout
+                </a></li>
+            </ul>
+        </div>
+    </div>
+</header>

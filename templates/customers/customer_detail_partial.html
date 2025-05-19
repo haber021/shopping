@@ -1,0 +1,87 @@
+<div class="row">
+    <div class="col-md-6">
+        <div class="detail-section">
+            <div class="detail-section-title">Customer Information</div>
+            <div class="detail-item">
+                <div class="detail-label">Name:</div>
+                <div class="detail-value">{{ customer.name }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Email:</div>
+                <div class="detail-value">{{ customer.email }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Phone:</div>
+                <div class="detail-value">{{ customer.phone }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Address:</div>
+                <div class="detail-value">{{ customer.address }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Customer Since:</div>
+                <div class="detail-value">{{ customer.created_at|date:"F d, Y" }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="detail-section">
+            <div class="detail-section-title">Customer Stats</div>
+            <div class="detail-item">
+                <div class="detail-label">Total Orders:</div>
+                <div class="detail-value">{{ customer.total_orders }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Loyalty Points:</div>
+                <div class="detail-value">{{ customer.loyalty_points }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Last Order:</div>
+                <div class="detail-value">
+                    {% if customer.orders.exists %}
+                        {{ customer.orders.first.created_at|date:"F d, Y" }}
+                    {% else %}
+                        Never
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="detail-section mt-3">
+    <div class="detail-section-title">Recent Orders</div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in customer.orders.all|slice:":3" %}
+                <tr>
+                    <td>#{{ order.id }}</td>
+                    <td>{{ order.created_at|date:"M d, Y" }}</td>
+                    <td>${{ order.total_amount|floatformat:2 }}</td>
+                    <td>
+                        <span class="badge bg-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No orders found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3 d-flex justify-content-end">
+    <a href="{% url 'customer-detail' customer.id %}" class="btn btn-primary">View Full Details</a>
+</div>

@@ -1,0 +1,152 @@
+{% extends 'customer/base.html' %}
+
+{% block title %}Register - ERP Shopping System{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title mb-0">Create a New Account</h4>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">Username</label>
+                            {{ form.username.errors }}
+                            <input type="text" name="username" maxlength="150" autofocus="" 
+                                   class="form-control {% if form.username.errors %}is-invalid{% endif %}" 
+                                   required id="id_username" placeholder="Choose a username">
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.username.errors }}
+                                </div>
+                            {% else %}
+                                <div class="form-text">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_email" class="form-label">Email Address</label>
+                            <input type="email" name="email" maxlength="254" 
+                                   class="form-control" 
+                                   required id="id_email" placeholder="Enter your email address">
+                            <div class="form-text">Required. We'll use this for order confirmations and notifications.</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_password1" class="form-label">Password</label>
+                                {{ form.password1.errors }}
+                                <input type="password" name="password1" 
+                                       class="form-control {% if form.password1.errors %}is-invalid{% endif %}" 
+                                       required id="id_password1" placeholder="Enter a secure password">
+                                {% if form.password1.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.password1.errors }}
+                                    </div>
+                                {% else %}
+                                    <div class="form-text">
+                                        <ul>
+                                            <li>Your password can't be too similar to your other personal information.</li>
+                                            <li>Your password must contain at least 8 characters.</li>
+                                            <li>Your password can't be a commonly used password.</li>
+                                            <li>Your password can't be entirely numeric.</li>
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_password2" class="form-label">Confirm Password</label>
+                                {{ form.password2.errors }}
+                                <input type="password" name="password2" 
+                                       class="form-control {% if form.password2.errors %}is-invalid{% endif %}" 
+                                       required id="id_password2" placeholder="Confirm your password">
+                                {% if form.password2.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.password2.errors }}
+                                    </div>
+                                {% else %}
+                                    <div class="form-text">Enter the same password as before, for verification.</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3 form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="termsAccepted" required>
+                            <label class="form-check-label" for="termsAccepted">
+                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Register
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p>Already have an account? <a href="{% url 'customer:login' %}" class="text-primary">Login here</a></p>
+                        <hr>
+                        <p>
+                            <i class="fas fa-user-cog me-1"></i>
+                            <a href="/admin/" class="text-primary">Administrator Login</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h4>1. Introduction</h4>
+                <p>These terms and conditions govern your use of our website and the purchase of products. By placing an order, you agree to these terms.</p>
+                
+                <h4>2. Account Registration</h4>
+                <p>When you register for an account, you must provide accurate and complete information. You are responsible for the security of your account and password.</p>
+                
+                <h4>3. Privacy Policy</h4>
+                <p>We collect and process your personal data in accordance with our Privacy Policy.</p>
+                
+                <h4>4. Order and Payment</h4>
+                <p>All orders are subject to availability and confirmation of the order price. Payment must be made at the time of placing the order.</p>
+                
+                <h4>5. Returns and Refunds</h4>
+                <p>Products may be returned within 14 days of delivery for a full refund. Products must be in original condition.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Agree</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

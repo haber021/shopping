@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports{% endblock %}
+
+{% block header_title %}Reports{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-box bg-primary text-white rounded p-3 me-3">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h5 class="mb-0">Sales Report</h5>
+                    </div>
+                    <p class="text-muted">
+                        View detailed sales analytics, including trends over time, top-selling products, 
+                        and revenue breakdowns by category.
+                    </p>
+                    <a href="{% url 'shop:sales_report' %}" class="btn btn-outline-primary mt-2">View Report</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-box bg-success text-white rounded p-3 me-3">
+                            <i class="fas fa-warehouse"></i>
+                        </div>
+                        <h5 class="mb-0">Inventory Report</h5>
+                    </div>
+                    <p class="text-muted">
+                        Monitor stock levels, identify products that need restocking, 
+                        and analyze inventory turnover by category.
+                    </p>
+                    <a href="{% url 'shop:inventory_report' %}" class="btn btn-outline-success mt-2">View Report</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-box bg-info text-white rounded p-3 me-3">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h5 class="mb-0">Customer Report</h5>
+                    </div>
+                    <p class="text-muted">
+                        Analyze customer purchasing behavior, identify your most valuable customers, 
+                        and track customer acquisition and retention.
+                    </p>
+                    <a href="{% url 'shop:customers_report' %}" class="btn btn-outline-info mt-2">View Report</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Quick Overview</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <div class="border rounded p-3 text-center">
+                        <h6 class="text-muted">Total Revenue (30 days)</h6>
+                        <h3 id="total-revenue-30" class="mb-0">Loading...</h3>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="border rounded p-3 text-center">
+                        <h6 class="text-muted">Orders (30 days)</h6>
+                        <h3 id="total-orders-30" class="mb-0">Loading...</h3>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="border rounded p-3 text-center">
+                        <h6 class="text-muted">Low Stock Items</h6>
+                        <h3 id="low-stock-count" class="mb-0">Loading...</h3>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="border rounded p-3 text-center">
+                        <h6 class="text-muted">Active Customers</h6>
+                        <h3 id="active-customers" class="mb-0">Loading...</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Export Options</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">
+                Export reports in various formats for further analysis or presentation.
+            </p>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6>Sales Data</h6>
+                            <div class="btn-group btn-group-sm mt-2">
+                                <button type="button" class="btn btn-outline-secondary disabled">CSV</button>
+                                <button type="button" class="btn btn-outline-secondary disabled">PDF</button>
+                                <button type="button" class="btn btn-outline-secondary disabled">Excel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6>Inventory Data</h6>
+                            <div class="btn-group btn-group-sm mt-2">
+                                <button type="button" class="btn btn-outline-secondary disabled">CSV</button>
+                                <button type="button" class="btn btn-outline-secondary disabled">PDF</button>
+                                <button type="button" class="btn btn-outline-secondary disabled">Excel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6>Customer Data</h6>
+                            <div class="btn-group btn-group-sm mt-2">
+                                <button type="button" class="btn btn-outline-secondary disabled">CSV</button>
+                                <button type="button" class="btn btn-outline-secondary disabled">PDF</button>
+                                <button type="button" class="btn btn-outline-secondary disabled">Excel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Export functionality will be available in future updates.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Simulating loading data from API
+        setTimeout(function() {
+            document.getElementById('total-revenue-30').textContent = '$0.00';
+            document.getElementById('total-orders-30').textContent = '0';
+            document.getElementById('low-stock-count').textContent = '0';
+            document.getElementById('active-customers').textContent = '0';
+            
+            // Fetch actual stats from API
+            fetch('/api/dashboard/stats/')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('low-stock-count').textContent = data.low_stock_count;
+                    document.getElementById('total-revenue-30').textContent = '$' + data.total_revenue.toFixed(2);
+                    document.getElementById('total-orders-30').textContent = data.total_orders;
+                    // We would need another API endpoint for active customers
+                })
+                .catch(error => console.error('Error fetching stats:', error));
+        }, 500);
+    });
+</script>
+{% endblock %}

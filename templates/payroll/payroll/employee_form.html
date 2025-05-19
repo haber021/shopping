@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - RetailPay{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">{{ title }}</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core_payroll:dashboard' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'payroll:employee_list' %}">Employees</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{{ title }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="{{ form.employee_id.id_for_label }}" class="form-label">Employee ID*</label>
+                                {{ form.employee_id.errors }}
+                                <input type="text" name="{{ form.employee_id.name }}" id="{{ form.employee_id.id_for_label }}" 
+                                    class="form-control {% if form.employee_id.errors %}is-invalid{% endif %}"
+                                    value="{{ form.employee_id.value|default:'' }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name*</label>
+                                {{ form.first_name.errors }}
+                                <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" 
+                                    class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+                                    value="{{ form.first_name.value|default:'' }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name*</label>
+                                {{ form.last_name.errors }}
+                                <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" 
+                                    class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+                                    value="{{ form.last_name.value|default:'' }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.department.id_for_label }}" class="form-label">Department*</label>
+                                {{ form.department.errors }}
+                                <select name="{{ form.department.name }}" id="{{ form.department.id_for_label }}" 
+                                        class="form-select {% if form.department.errors %}is-invalid{% endif %}" required>
+                                    <option value="">Select Department</option>
+                                    {% for choice in form.department.field.choices %}
+                                        {% if choice.0 %}
+                                            <option value="{{ choice.0 }}" {% if form.department.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                                {{ choice.1 }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.employment_type.id_for_label }}" class="form-label">Employment Type*</label>
+                                {{ form.employment_type.errors }}
+                                <select name="{{ form.employment_type.name }}" id="{{ form.employment_type.id_for_label }}" 
+                                        class="form-select {% if form.employment_type.errors %}is-invalid{% endif %}" required>
+                                    <option value="">Select Type</option>
+                                    {% for choice in form.employment_type.field.choices %}
+                                        <option value="{{ choice.0 }}" {% if form.employment_type.value == choice.0 %}selected{% endif %}>
+                                            {{ choice.1 }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.join_date.id_for_label }}" class="form-label">Join Date*</label>
+                                {{ form.join_date.errors }}
+                                <input type="date" name="{{ form.join_date.name }}" id="{{ form.join_date.id_for_label }}" 
+                                       class="form-control {% if form.join_date.errors %}is-invalid{% endif %}"
+                                       value="{{ form.join_date.value|date:'Y-m-d'|default:'' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.base_salary.id_for_label }}" class="form-label">Base Salary*</label>
+                                {{ form.base_salary.errors }}
+                                <div class="input-group">
+                                    <span class="input-group-text">₱</span>
+                                    <input type="number" name="{{ form.base_salary.name }}" id="{{ form.base_salary.id_for_label }}" 
+                                           class="form-control {% if form.base_salary.errors %}is-invalid{% endif %}"
+                                           value="{{ form.base_salary.value|default:'' }}" step="0.01" min="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                                {{ form.email.errors }}
+                                <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" 
+                                       class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+                                       value="{{ form.email.value|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label">Phone</label>
+                                {{ form.phone.errors }}
+                                <input type="tel" name="{{ form.phone.name }}" id="{{ form.phone.id_for_label }}" 
+                                       class="form-control {% if form.phone.errors %}is-invalid{% endif %}"
+                                       value="{{ form.phone.value|default:'' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                            {{ form.address.errors }}
+                            <textarea name="{{ form.address.name }}" id="{{ form.address.id_for_label }}" 
+                                      class="form-control {% if form.address.errors %}is-invalid{% endif %}" 
+                                      rows="3">{{ form.address.value|default:'' }}</textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.bank_name.id_for_label }}" class="form-label">Bank Name</label>
+                                {{ form.bank_name.errors }}
+                                <input type="text" name="{{ form.bank_name.name }}" id="{{ form.bank_name.id_for_label }}" 
+                                       class="form-control {% if form.bank_name.errors %}is-invalid{% endif %}"
+                                       value="{{ form.bank_name.value|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.bank_account.id_for_label }}" class="form-label">Bank Account Number</label>
+                                {{ form.bank_account.errors }}
+                                <input type="text" name="{{ form.bank_account.name }}" id="{{ form.bank_account.id_for_label }}" 
+                                       class="form-control {% if form.bank_account.errors %}is-invalid{% endif %}"
+                                       value="{{ form.bank_account.value|default:'' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" name="{{ form.active.name }}" id="{{ form.active.id_for_label }}" 
+                                   class="form-check-input" {% if form.active.value %}checked{% endif %}>
+                            <label class="form-check-label" for="{{ form.active.id_for_label }}">Active</label>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'payroll:employee_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Employee</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Employee Types</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Full-time</h6>
+                                    <p class="text-muted mb-0 small">Regular employees working standard hours</p>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">FT</span>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Part-time</h6>
+                                    <p class="text-muted mb-0 small">Employees working reduced hours</p>
+                                </div>
+                                <span class="badge bg-info rounded-pill">PT</span>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Contract</h6>
+                                    <p class="text-muted mb-0 small">Fixed-term project-based workers</p>
+                                </div>
+                                <span class="badge bg-warning rounded-pill">CT</span>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Seasonal</h6>
+                                    <p class="text-muted mb-0 small">Temporary employees for peak periods</p>
+                                </div>
+                                <span class="badge bg-secondary rounded-pill">SS</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Help</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="small">
+                        <li>All fields marked with * are required.</li>
+                        <li>Employee ID must be unique for each employee.</li>
+                        <li>Set status to inactive if the employee is no longer working.</li>
+                        <li>Bank details are required for direct deposit payroll.</li>
+                        <li>After creating an employee, you can assign pay heads to calculate proper salary.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/payroll.js"></script>
+{% endblock %}

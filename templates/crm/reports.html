@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}CRM - Reports & Analytics{% endblock %}
+
+{% block authenticated_content %}
+<div class="container-fluid px-4">
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Reports & Analytics</h1>
+        <div>
+            <select id="timePeriod" class="form-select form-select-sm">
+                <option value="3" {% if months == 3 %}selected{% endif %}>Last 3 Months</option>
+                <option value="6" {% if months == 6 %}selected{% endif %}>Last 6 Months</option>
+                <option value="12" {% if months == 12 %}selected{% endif %}>Last 12 Months</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Dashboard Summary -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs text-muted text-uppercase mb-1">Total Contacts</div>
+                            <div class="h3 mb-0">{{ stats.contacts }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-address-book fa-2x text-muted"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs text-muted text-uppercase mb-1">Active Leads</div>
+                            <div class="h3 mb-0">{{ stats.leads }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-funnel-dollar fa-2x text-muted"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs text-muted text-uppercase mb-1">Closed Deals</div>
+                            <div class="h3 mb-0">{{ stats.won_deals }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs text-muted text-uppercase mb-1">Total Revenue</div>
+                            <div class="h3 mb-0">${{ '%0.2f'|format(stats.total_revenue|float) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-muted"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Rows -->
+    <div class="row mb-4">
+        <!-- Monthly Performance -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Monthly Lead Performance</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" data-export="png" data-chart="monthlyPerformanceChart">Export as PNG</a></li>
+                            <li><a class="dropdown-item" href="#" data-export="pdf" data-chart="monthlyPerformanceChart">Export as PDF</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="monthlyPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lead Distribution -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Lead Distribution</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" data-export="png" data-chart="leadDistributionChart">Export as PNG</a></li>
+                            <li><a class="dropdown-item" href="#" data-export="pdf" data-chart="leadDistributionChart">Export as PDF</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="leadDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Lead Value -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Lead Value by Stage</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" data-export="png" data-chart="leadValueChart">Export as PNG</a></li>
+                            <li><a class="dropdown-item" href="#" data-export="pdf" data-chart="leadValueChart">Export as PDF</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="leadValueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversion Rate -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Conversion Rate</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" data-export="png" data-chart="conversionRateChart">Export as PNG</a></li>
+                            <li><a class="dropdown-item" href="#" data-export="pdf" data-chart="conversionRateChart">Export as PDF</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="conversionRateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Data Table -->
+    <div class="card border-0 shadow">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Sales Performance Summary</h5>
+            <button class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-file-excel me-1"></i> Export Excel
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Stage</th>
+                            <th scope="col" class="text-center">Count</th>
+                            <th scope="col" class="text-end">Total Value</th>
+                            <th scope="col" class="text-end">Avg. Value</th>
+                            <th scope="col" class="text-end">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set total_count = namespace(value=0) %}
+                        {% for stage in lead_counts.keys() %}
+                            {% set total_count.value = total_count.value + lead_counts[stage] %}
+                        {% endfor %}
+                        
+                        {% for stage in lead_counts.keys() %}
+                            <tr>
+                                <td>{{ stage }}</td>
+                                <td class="text-center">{{ lead_counts[stage] }}</td>
+                                <td class="text-end">${{ '%0.2f'|format(lead_values[stage]|float) }}</td>
+                                <td class="text-end">
+                                    {% if lead_counts[stage] > 0 %}
+                                        ${{ '%0.2f'|format((lead_values[stage] / lead_counts[stage])|float) }}
+                                    {% else %}
+                                        $0.00
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if total_count.value > 0 %}
+                                        {{ '%0.1f'|format((lead_counts[stage] / total_count.value * 100)|float) }}%
+                                    {% else %}
+                                        0.0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th>Total</th>
+                            <th class="text-center">{{ total_count.value }}</th>
+                            <th class="text-end">${{ '%0.2f'|format(lead_values.values()|sum|float) }}</th>
+                            <th class="text-end">
+                                {% if total_count.value > 0 %}
+                                    ${{ '%0.2f'|format((lead_values.values()|sum / total_count.value)|float) }}
+                                {% else %}
+                                    $0.00
+                                {% endif %}
+                            </th>
+                            <th class="text-end">100%</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Pass data from Flask to JavaScript
+    const leadCounts = {{ lead_counts|tojson }};
+    const leadValues = {{ lead_values|tojson }};
+    const monthlyData = {{ monthly_data|safe }};
+</script>
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+{% endblock %}

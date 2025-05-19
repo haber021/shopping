@@ -1,0 +1,140 @@
+{% extends "crm_base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}CRM - Contacts{% endblock %}
+
+{% block authenticated_content %}
+<div class="container-fluid px-4">
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Contacts</h1>
+        <a href="{% url 'CRM:new_contact' %}" class="btn btn-primary">
+            <i class="fas fa-user-plus me-1"></i> Add Contact
+        </a>
+    </div>
+
+    <!-- Search and filters -->
+    <div class="card border-0 shadow mb-4">
+        <div class="card-body p-3">
+            <form id="contactSearchForm" action="{% url 'CRM:contacts' %}" method="get" class="row g-3">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="contactSearch" name="search" placeholder="Search by name, email, company or tags..." value="{{ search }}">
+                        {% if search %}
+                            <button type="button" id="clearSearch" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="btn-group w-100">
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-sort me-1"></i> Sort By
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end w-100">
+                            <li><a class="dropdown-item sort-option" href="#" data-sort="name">Name</a></li>
+                            <li><a class="dropdown-item sort-option" href="#" data-sort="company">Company</a></li>
+                            <li><a class="dropdown-item sort-option" href="#" data-sort="recent">Recently Contacted</a></li>
+                        </ul>
+                        <input type="hidden" id="sortField" name="sort" value="name">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contacts list -->
+    <div class="card border-0 shadow">
+        <div class="card-body p-0">
+            {% if contacts %}
+                <div class="table-responsive contact-list">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Phone</th>
+                                <th scope="col">Company</th>
+                                <th scope="col">Last Contact</th>
+                                <th scope="col">Tags</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for contact in contacts %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'edit_contact' contact.id %}" class="text-decoration-none">
+                                            {{ contact.first_name }} {{ contact.last_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ contact.email|default:"N/A" }}</td>
+                                    <td>{{ contact.phone|default:"N/A" }}</td>
+                                    <td>{{ contact.company|default:"N/A" }}</td>
+                                    <td>
+                                        {% if contact.last_contacted %}
+                                            {{ contact.last_contacted|date:"M d, Y" }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if contact.tags %}
+                                            {% for tag in contact.tags|split:"," %}
+                                                <span class="badge bg-secondary me-1 tag-filter">{{ tag|slice:"2:-1" }}</span>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group">
+                                            <a href="{% url 'edit_contact' contact.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    data-action="delete-contact"
+                                                    data-id="{{ contact.id }}"
+                                                    data-name="{{ contact.first_name }} {{ contact.last_name }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-address-book fa-3x text-muted mb-3"></i>
+                    <h5>No contacts found</h5>
+                    <p class="text-muted">
+                        {% if search %}
+                            No contacts match your search criteria.
+                            <a href="{% url 'CRM:contacts' %}" class="btn btn-sm btn-outline-primary mt-2">Clear Search</a>
+                        {% else %}
+                            Get started by adding your first contact.
+                            <a href="{% url 'CRM:new_contact' %}" class="btn btn-sm btn-primary mt-2">
+                                <i class="fas fa-user-plus me-1"></i> Add Contact
+                            </a>
+                        {% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Hidden form for delete action -->
+    <form id="deleteContactForm" method="post" style="display: none;">
+        {% csrf_token %}
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'crm/js/contacts.js' %}"></script>
+{% endblock %}

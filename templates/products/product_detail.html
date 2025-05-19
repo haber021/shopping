@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} | ERP Shopping System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Product Details</h1>
+        <div>
+            <a href="{% url 'product-update' product.id %}" class="btn btn-warning me-2">
+                <i class="fas fa-edit me-2"></i>Edit
+            </a>
+            <a href="{% url 'product-list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Products
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <span>Product Information</span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded">
+                            {% else %}
+                                <div class="text-center p-5 bg-light rounded">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                    <p class="mt-2 text-muted">No image available</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <div class="detail-section">
+                                <div class="detail-item">
+                                    <div class="detail-label">Product Name:</div>
+                                    <div class="detail-value">{{ product.name }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Category:</div>
+                                    <div class="detail-value">{{ product.category.name|default:'No Category' }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Price:</div>
+                                    <div class="detail-value">${{ product.price|floatformat:2 }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Description:</div>
+                                    <div class="detail-value">{{ product.description }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Added On:</div>
+                                    <div class="detail-value">{{ product.created_at|date:"F d, Y" }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Last Updated:</div>
+                                    <div class="detail-value">{{ product.updated_at|date:"F d, Y" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if product.supplier %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <span>Supplier Information</span>
+                </div>
+                <div class="card-body">
+                    <div class="detail-section">
+                        <div class="detail-item">
+                            <div class="detail-label">Supplier Name:</div>
+                            <div class="detail-value">{{ product.supplier.name }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Contact Person:</div>
+                            <div class="detail-value">{{ product.supplier.contact_person }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Email:</div>
+                            <div class="detail-value">{{ product.supplier.email }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Phone:</div>
+                            <div class="detail-value">{{ product.supplier.phone }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <span>Inventory Status</span>
+                </div>
+                <div class="card-body">
+                    {% for inventory in product.inventory_set.all %}
+                    <div class="text-center mb-4">
+                        <div class="display-4 {% if inventory.is_out_of_stock %}text-danger{% elif inventory.is_low_stock %}text-warning{% else %}text-success{% endif %}">
+                            {{ inventory.current_stock }}
+                        </div>
+                        <div class="text-muted">Current Stock</div>
+                    </div>
+                    
+                    <div class="progress mb-3" style="height: 10px;">
+                        {% with percentage=inventory.current_stock|floatformat:0|add:0 %}
+                        <div class="progress-bar {% if percentage < 25 %}bg-danger{% elif percentage < 50 %}bg-warning{% else %}bg-success{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ percentage }}%;" 
+                             aria-valuenow="{{ percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                        {% endwith %}
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Reorder Level:</div>
+                        <div class="detail-value">{{ inventory.reorder_level }} units</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Status:</div>
+                        <div class="detail-value">
+                            {% if inventory.is_out_of_stock %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% elif inventory.is_low_stock %}
+                                <span class="badge bg-warning">Low Stock</span>
+                            {% else %}
+                                <span class="badge bg-success">In Stock</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Last Updated:</div>
+                        <div class="detail-value">{{ inventory.last_updated|date:"F d, Y" }}</div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'restock-inventory' inventory.id %}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus-circle me-2"></i>Restock
+                        </a>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <div class="text-muted">No inventory information available</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span>Order History</span>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for item in product.orderitem_set.all|slice:":5" %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Order #{{ item.order.id }}</strong>
+                                    <div class="text-muted">{{ item.order.created_at|date:"M d, Y" }}</div>
+                                </div>
+                                <span>{{ item.quantity }} units</span>
+                            </div>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-center">No order history</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

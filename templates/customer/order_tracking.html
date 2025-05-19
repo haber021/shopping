@@ -1,0 +1,483 @@
+{% extends 'customer/base.html' %}
+{% load customer_tags %}
+
+{% block title %}Tracking Order #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'customer:order_detail' order.id %}" class="btn btn-sm btn-outline-secondary me-3">
+            <i class="fas fa-arrow-left me-2"></i>Back to Order
+        </a>
+        <h1 class="h3 mb-0">Tracking Order #{{ order.id }}</h1>
+        <span class="badge 
+            {% if order.status == 'pending' %}bg-warning text-dark
+            {% elif order.status == 'processing' %}bg-info text-dark
+            {% elif order.status == 'packed' %}bg-primary
+            {% elif order.status == 'shipped' %}bg-primary
+            {% elif order.status == 'out_for_delivery' %}bg-info
+            {% elif order.status == 'delivered' %}bg-success
+            {% elif order.status == 'cancelled' %}bg-danger
+            {% else %}bg-secondary{% endif %} ms-3">
+            {{ order.get_status_display }}
+        </span>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Order Status and Tracking Info -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Order Status</h2>
+                    <span class="text-muted small">{{ order.last_updated|date:"M d, Y" }}</span>
+                </div>
+                <div class="card-body">
+                    <!-- Order Details -->
+                    <div class="mb-4">
+                        <div class="row mb-2">
+                            <div class="col-5 text-muted">Order Date:</div>
+                            <div class="col-7">{{ order.order_date|date:"F j, Y" }}</div>
+                        </div>
+                        {% if order.tracking_number %}
+                        <div class="row mb-2">
+                            <div class="col-5 text-muted">Tracking #:</div>
+                            <div class="col-7 text-break">{{ order.tracking_number }}</div>
+                        </div>
+                        {% endif %}
+                        {% if order.delivery_partner %}
+                        <div class="row mb-2">
+                            <div class="col-5 text-muted">Carrier:</div>
+                            <div class="col-7">{{ order.delivery_partner }}</div>
+                        </div>
+                        {% endif %}
+                        {% if order.estimated_delivery %}
+                        <div class="row mb-2">
+                            <div class="col-5 text-muted">Est. Delivery:</div>
+                            <div class="col-7">{{ order.estimated_delivery|date:"F j, Y" }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Order Progress -->
+                    <h5 class="card-title mb-3">Delivery Progress</h5>
+                    <div class="progress-tracker mb-3">
+                        <ul class="progress-steps">
+                            <li class="progress-step {% if order.status != 'pending' %}is-complete{% endif %} {% if order.status == 'pending' %}is-active{% endif %}">
+                                <div class="progress-marker"></div>
+                                <div class="progress-text">
+                                    <h6 class="progress-title">Order Placed</h6>
+                                </div>
+                            </li>
+                            <li class="progress-step {% if order.status == 'processing' or order.status == 'packed' or order.status == 'shipped' or order.status == 'out_for_delivery' or order.status == 'delivered' %}is-complete{% endif %} {% if order.status == 'processing' %}is-active{% endif %}">
+                                <div class="progress-marker"></div>
+                                <div class="progress-text">
+                                    <h6 class="progress-title">Processing</h6>
+                                </div>
+                            </li>
+                            <li class="progress-step {% if order.status == 'packed' or order.status == 'shipped' or order.status == 'out_for_delivery' or order.status == 'delivered' %}is-complete{% endif %} {% if order.status == 'packed' %}is-active{% endif %}">
+                                <div class="progress-marker"></div>
+                                <div class="progress-text">
+                                    <h6 class="progress-title">Packed</h6>
+                                </div>
+                            </li>
+                            <li class="progress-step {% if order.status == 'shipped' or order.status == 'out_for_delivery' or order.status == 'delivered' %}is-complete{% endif %} {% if order.status == 'shipped' %}is-active{% endif %}">
+                                <div class="progress-marker"></div>
+                                <div class="progress-text">
+                                    <h6 class="progress-title">Shipped</h6>
+                                </div>
+                            </li>
+                            <li class="progress-step {% if order.status == 'out_for_delivery' or order.status == 'delivered' %}is-complete{% endif %} {% if order.status == 'out_for_delivery' %}is-active{% endif %}">
+                                <div class="progress-marker"></div>
+                                <div class="progress-text">
+                                    <h6 class="progress-title">Out for Delivery</h6>
+                                </div>
+                            </li>
+                            <li class="progress-step {% if order.status == 'delivered' %}is-complete{% endif %} {% if order.status == 'delivered' %}is-active{% endif %}">
+                                <div class="progress-marker"></div>
+                                <div class="progress-text">
+                                    <h6 class="progress-title">Delivered</h6>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- QR Code for Delivery Partners -->
+                    <div class="text-center mt-4 mb-2">
+                        <div class="mb-2">
+                            <span class="badge bg-light text-dark">Scan to Update Delivery Status</span>
+                        </div>
+                        {% if order.qr_code %}
+                            <img src="{{ order.qr_code.url }}" alt="Order QR Code" class="img-fluid border" style="max-width: 160px;">
+                        {% else %}
+                            <div class="bg-light border rounded p-3 mx-auto" style="width: 160px; height: 160px;">
+                                <span class="text-muted">QR Code not available</span>
+                            </div>
+                        {% endif %}
+                        <p class="text-muted mt-2 small">
+                            Delivery personnel can scan this code to update your order status.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Map and Tracking History -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Delivery Location</h2>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Map Container -->
+                    <div id="delivery-map" style="height: 400px; width: 100%;"></div>
+                </div>
+                <div class="card-footer bg-white py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-map-marker-alt fa-2x text-danger"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Delivery Address</h5>
+                            <p class="mb-0">{{ order.shipping_address }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Status History -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Tracking Updates</h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="timeline-vertical p-3">
+                        {% for status_update in order.status_history.all %}
+                        <div class="timeline-item-vertical">
+                            <div class="timeline-left-vertical">
+                                <div class="timeline-date-vertical">
+                                    {{ status_update.timestamp|date:"M d" }}
+                                    <div class="timeline-time-vertical">{{ status_update.timestamp|date:"g:i a" }}</div>
+                                </div>
+                            </div>
+                            <div class="timeline-center-vertical">
+                                <div class="timeline-marker-vertical 
+                                    {% if status_update.status == 'delivered' %}bg-success
+                                    {% elif status_update.status == 'cancelled' %}bg-danger
+                                    {% else %}bg-primary{% endif %}"></div>
+                            </div>
+                            <div class="timeline-right-vertical">
+                                <div class="timeline-content-vertical">
+                                    <h5 class="mb-1">{{ status_update.get_status_display }}</h5>
+                                    {% if status_update.location %}
+                                        <p class="mb-1">
+                                            <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                                            {{ status_update.location.location_name|default:"Location updated" }}
+                                        </p>
+                                    {% endif %}
+                                    {% if status_update.notes %}
+                                        <p class="mb-0 text-muted">
+                                            {{ status_update.notes }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center p-4">
+                            <p class="text-muted">No tracking updates available yet.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Items -->
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white">
+            <h2 class="h5 mb-0">Order Items</h2>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="width: 50px;">#</th>
+                            <th scope="col">Product</th>
+                            <th scope="col" class="text-end">Price</th>
+                            <th scope="col" class="text-center">Quantity</th>
+                            <th scope="col" class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-light me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-box text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-0">{{ item.product.name }}</h6>
+                                        {% if item.product.category %}
+                                            <small class="text-muted">{{ item.product.category.name }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-end">{{ item.price|currency }}</td>
+                            <td class="text-center">{{ item.quantity }}</td>
+                            <td class="text-end">{{ item.total|currency }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="4" class="text-end">Total</th>
+                            <th class="text-end">{{ order.total_amount|currency }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Progress Tracker */
+    .progress-tracker {
+        position: relative;
+    }
+    
+    .progress-steps {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: table;
+        table-layout: fixed;
+        width: 100%;
+        overflow: hidden;
+    }
+    
+    .progress-step {
+        display: table-cell;
+        position: relative;
+        text-align: center;
+        padding: 0 5px;
+    }
+    
+    .progress-step:before {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 16px;
+        left: 0;
+        height: 3px;
+        width: 100%;
+        background-color: #e9ecef;
+        z-index: 1;
+    }
+    
+    .progress-step:first-child:before {
+        left: 50%;
+        width: 50%;
+    }
+    
+    .progress-step:last-child:before {
+        width: 50%;
+        right: 50%;
+    }
+    
+    .progress-marker {
+        display: block;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        border: 3px solid #fff;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .progress-step.is-active .progress-marker {
+        background-color: #007bff;
+    }
+    
+    .progress-step.is-complete .progress-marker {
+        background-color: #28a745;
+    }
+    
+    .progress-step.is-complete:before {
+        background-color: #28a745;
+    }
+    
+    .progress-step.is-active:before {
+        background-color: #007bff;
+    }
+    
+    .progress-text {
+        padding-top: 10px;
+        display: block;
+    }
+    
+    .progress-title {
+        font-size: 0.875rem;
+        margin-bottom: 0;
+    }
+    
+    /* Vertical Timeline */
+    .timeline-vertical {
+        position: relative;
+    }
+    
+    .timeline-item-vertical {
+        display: flex;
+        position: relative;
+        margin-bottom: 30px;
+    }
+    
+    .timeline-left-vertical {
+        flex: 0 0 110px;
+    }
+    
+    .timeline-center-vertical {
+        flex: 0 0 30px;
+        position: relative;
+    }
+    
+    .timeline-right-vertical {
+        flex: 1;
+    }
+    
+    .timeline-date-vertical {
+        text-align: right;
+        padding-right: 20px;
+        padding-top: 3px;
+        font-weight: 600;
+    }
+    
+    .timeline-time-vertical {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: normal;
+    }
+    
+    .timeline-marker-vertical {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: #007bff;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+    
+    .timeline-content-vertical {
+        padding-left: 10px;
+        position: relative;
+        top: -4px;
+    }
+    
+    .timeline-center-vertical:before {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        height: calc(100% + 30px);
+        width: 2px;
+        background-color: #e9ecef;
+    }
+    
+    .timeline-item-vertical:last-child .timeline-center-vertical:before {
+        display: none;
+    }
+    
+    /* Map Styles */
+    #delivery-map {
+        background-color: #f8f9fa;
+    }
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="" />
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the map
+        var map = L.map('delivery-map').setView([0, 0], 13);
+        
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Add delivery address marker
+        var deliveryAddressMarker = L.marker([0, 0]).addTo(map)
+            .bindPopup("Delivery Address:<br>{{ order.shipping_address|escapejs }}");
+        
+        // Add location update markers if available
+        {% for location in order.delivery_locations.all %}
+            var locationMarker = L.marker([{{ location.latitude }}, {{ location.longitude }}]).addTo(map)
+                .bindPopup("<strong>{{ location.status_update|default:"Location Update" }}</strong><br>{{ location.timestamp|date:'M d, Y g:i a' }}<br>{% if location.notes %}Note: {{ location.notes|escapejs }}{% endif %}");
+        {% endfor %}
+        
+        // Set map view based on available locations or geocode the delivery address
+        {% if order.delivery_locations.exists %}
+            // Get the latest location
+            var latestLocation = {
+                lat: {{ order.delivery_locations.first.latitude }},
+                lng: {{ order.delivery_locations.first.longitude }}
+            };
+            map.setView([latestLocation.lat, latestLocation.lng], 13);
+            deliveryAddressMarker.setLatLng([latestLocation.lat, latestLocation.lng]);
+        {% else %}
+            // Geocode the delivery address (in a real app, this would use a geocoding service)
+            // For now, use a placeholder location
+            var defaultLocation = { lat: 37.7749, lng: -122.4194 }; // San Francisco by default
+            map.setView([defaultLocation.lat, defaultLocation.lng], 13);
+            deliveryAddressMarker.setLatLng([defaultLocation.lat, defaultLocation.lng]);
+            
+            // In a real app, you would use something like:
+            // fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent('{{ order.shipping_address|escapejs }}') + '.json?access_token=YOUR_MAPBOX_TOKEN')
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         // Extract coordinates and update map
+            //     });
+        {% endif %}
+        
+        // Add a path connecting all location points chronologically
+        {% if order.delivery_locations.count > 1 %}
+            var pathPoints = [
+                {% for location in order.delivery_locations.all|dictsort:"timestamp" %}
+                    [{{ location.latitude }}, {{ location.longitude }}],
+                {% endfor %}
+            ];
+            
+            var deliveryPath = L.polyline(pathPoints, {
+                color: '#007bff',
+                weight: 4,
+                opacity: 0.7,
+                dashArray: '10, 10',
+                lineJoin: 'round'
+            }).addTo(map);
+            
+            // Fit the map to show all points
+            map.fitBounds(deliveryPath.getBounds());
+        {% endif %}
+    });
+</script>
+{% endblock %}

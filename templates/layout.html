@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP System - {% block title %}{% endblock %}</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{% static 'online_retail_dash/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'online_retail_dash/css/sidebar.css' %}">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block head_content %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2 class="logo">ERP System</h2>
+            </div>
+            
+            <div class="sidebar-menu">
+                <p class="menu-title">MAIN MENU</p>
+                <ul>
+                    <li class="menu-item {% if request.path == '/retail/online/' %}active{% endif %}">
+                        <a href="{% url 'online_retail_dash:home' %}">
+                            <span class="icon"><i class="fas fa-home"></i></span>
+                            <span class="text">Home</span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% if request.path == '/retail/online_dashboard/' %}active{% endif %}">
+                        <a href="{% url 'shop:dashboard' %}">
+                            <span class="icon"><i class="fas fa-tachometer-alt"></i></span>
+                            <span class="text">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% if request.path == '/retail/orders/' %}active{% endif %}">
+                        <a href="{% url 'shop:order_list' %}">
+                            <span class="icon"><i class="fas fa-shopping-cart"></i></span>
+                            <span class="text">Orders</span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% if request.path == '/retail/inventory/' %}active{% endif %}">
+                        <a href="{% url 'shop:inventory_list' %}">
+                            <span class="icon"><i class="fas fa-boxes"></i></span>
+                            <span class="text">Inventory</span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% if request.path == '/retail/procurement/' %}active{% endif %}">
+                        <a href="{% url 'online_retail_dash:procurement' %}">
+                            <span class="icon"><i class="fas fa-truck"></i></span>
+                            <span class="text">Procurement</span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% if request.path == '/retail/crm/' %}active{% endif %}">
+                        <a href="{% url 'online_retail_dash:crm' %}">
+                            <span class="icon"><i class="fas fa-users"></i></span>
+                            <span class="text">CRM</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <p class="menu-title">GENERAL</p>
+                <ul>
+                    <li class="menu-item {% if request.path == '/retail/settings/' %}active{% endif %}">
+                        <a href="{% url 'online_retail_dash:settings' %}">
+                            <span class="icon"><i class="fas fa-cog"></i></span>
+                            <span class="text">Settings</span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% if request.path == '/retail/help/' %}active{% endif %}">
+                        <a href="{% url 'online_retail_dash:help' %}">
+                            <span class="icon"><i class="fas fa-question-circle"></i></span>
+                            <span class="text">Help</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Navigation Bar -->
+            <nav class="topbar">
+                <div class="search-container">
+                    <form method="GET" action="{% url 'online_retail_dash:search' %}">
+                        <input type="text" name="q" placeholder="Search...">
+                        <button type="submit"><i class="fas fa-search"></i></button>
+                    </form>
+                </div>
+                <div class="user-profile">
+                    <div class="dropdown">
+                        <button class="dropdown-toggle">
+                            <i class="fas fa-user-circle"></i>
+                            <span>{{ request.user.username }}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="{% url 'online_retail_dash:profile' %}">Profile</a>
+                            <a href="{% url 'online_retail_dash:logout' %}">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Page Content -->
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

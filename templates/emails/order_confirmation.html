@@ -1,0 +1,14 @@
+
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Order Confirmation</h2>
+    <p>Dear {{ order.customer.name }},</p>
+    <p>Your order has been successfully placed.</p>
+    <p><strong>Order Number:</strong> {{ order.order_number }}</p>
+    <p><strong>Order Date:</strong> {{ order.created_at|date:"F j, Y" }}</p>
+    <p><strong>Total Amount:</strong> {{ order.total_amount|currency }}</p>
+    <p>You can track your order status in your account dashboard.</p>
+    <p>Thank you for shopping with us!</p>
+</body>
+</html>

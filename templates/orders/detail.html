@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load shop_tags %}
+
+{% block title %}{{ title|default:"Order Details" }}{% endblock %}
+
+{% block header_title %}{{ title|default:"Order Details" }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    {% if order %}
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="card-title">Order #{{ order.id }}</h5>
+                            {% order_status_badge order.status %}
+                        </div>
+                        
+                        {% if form %}
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                {{ form|crispy }}
+                                
+                                <div class="mt-4 d-flex justify-content-between">
+                                    <a href="{% url 'shop:order_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">Update Order</button>
+                                </div>
+                            </form>
+                        {% else %}
+                            <div class="row mb-3">
+                                <div class="col-md-4 text-muted">Customer:</div>
+                                <div class="col-md-8">{{ order.customer.name }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4 text-muted">Order Date:</div>
+                                <div class="col-md-8">{{ order.order_date|date:"F d, Y H:i" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4 text-muted">Shipping Address:</div>
+                                <div class="col-md-8">{{ order.shipping_address }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4 text-muted">Payment Method:</div>
+                                <div class="col-md-8">{{ order.payment_method }}</div>
+                            </div>
+                            
+                            {% if order.notes %}
+                            <div class="row mb-3">
+                                <div class="col-md-4 text-muted">Notes:</div>
+                                <div class="col-md-8">{{ order.notes }}</div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mt-4 d-flex justify-content-between">
+                                <a href="{% url 'shop:order_list' %}" class="btn btn-outline-secondary">Back to List</a>
+                                <div>
+                                    <a href="{% url 'shop:order_update' order.id %}" class="btn btn-primary">Update Status</a>
+                                    {% if order.status != 'cancelled' and order.status != 'delivered' %}
+                                    <a href="{% url 'shop:order_cancel' order.id %}" class="btn btn-danger">Cancel Order</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <!-- Create Order Form -->
+                        <h5 class="card-title mb-4">Create New Order</h5>
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.customer|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.payment_method|as_crispy_field }}
+                                </div>
+                            </div>
+                            
+                            {{ form.shipping_address|as_crispy_field }}
+                            {{ form.notes|as_crispy_field }}
+                            
+                            <!-- Order Items Section -->
+                            <div class="mt-4">
+                                <h6>Order Items</h6>
+                                <div id="order-items">
+                                    <div class="row mb-2 order-item-row">
+                                        <div class="col-md-5">
+                                            <label class="form-label">Product</label>
+                                            <select name="item_product_0" class="form-select product-select" required>
+                                                <option value="">Select a product</option>
+                                                {% for product in products %}
+                                                    <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.stock }}">
+                                                        {{ product.name }} ({{ product.stock }} in stock)
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Quantity</label>
+                                            <input type="number" name="item_quantity_0" class="form-control quantity-input" min="1" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Price</label>
+                                            <div class="form-control-plaintext item-price">$0.00</div>
+                                        </div>
+                                        <div class="col-md-1 d-flex align-items-end">
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-item" title="Remove Item">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <input type="hidden" name="item_count" id="item-count" value="1">
+                                
+                                <div class="d-flex justify-content-between mt-2">
+                                    <button type="button" id="add-item" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-plus me-1"></i> Add Another Item
+                                    </button>
+                                    <div class="text-end">
+                                        <strong>Total: <span id="order-total">$0.00</span></strong>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 d-flex justify-content-between">
+                                <a href="{% url 'shop:order_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                                <button type="submit" class="btn btn-primary">Create Order</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            {% if order %}
+                <!-- Order Items -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Order Items</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th class="text-end">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order_items %}
+                                    <tr>
+                                        <td>{{ item.product.name }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td class="text-end">{{ item.price|currency }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-center py-3">No items in this order</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="2">Total</th>
+                                    <th class="text-end">{{ order.total_amount|currency }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Customer Info Card -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Customer Information</h5>
+                        <a href="{% url 'shop:customer_detail' order.customer.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">
+                            <i class="fas fa-user me-2 text-muted"></i> {{ order.customer.name }}
+                        </p>
+                        <p class="mb-2">
+                            <i class="fas fa-envelope me-2 text-muted"></i> {{ order.customer.email }}
+                        </p>
+                        {% if order.customer.phone %}
+                        <p class="mb-2">
+                            <i class="fas fa-phone me-2 text-muted"></i> {{ order.customer.phone }}
+                        </p>
+                        {% endif %}
+                        {% if order.customer.address %}
+                        <p class="mb-0">
+                            <i class="fas fa-map-marker-alt me-2 text-muted"></i> {{ order.customer.address }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if not order %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderItems = document.getElementById('order-items');
+        const addItemBtn = document.getElementById('add-item');
+        const itemCountInput = document.getElementById('item-count');
+        let itemCount = 1;
+        
+        // Add another item row
+        addItemBtn.addEventListener('click', function() {
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-2 order-item-row';
+            newRow.innerHTML = `
+                <div class="col-md-5">
+                    <label class="form-label">Product</label>
+                    <select name="item_product_${itemCount}" class="form-select product-select" required>
+                        <option value="">Select a product</option>
+                        {% for product in products %}
+                            <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.stock }}">
+                                {{ product.name }} ({{ product.stock }} in stock)
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" name="item_quantity_${itemCount}" class="form-control quantity-input" min="1" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Price</label>
+                    <div class="form-control-plaintext item-price">$0.00</div>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-item" title="Remove Item">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            orderItems.appendChild(newRow);
+            itemCount++;
+            itemCountInput.value = itemCount;
+            
+            // Update event listeners
+            addEventListeners();
+            updateTotal();
+        });
+        
+        // Remove item row
+        function addEventListeners() {
+            document.querySelectorAll('.remove-item').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('.order-item-row').remove();
+                    itemCount--;
+                    itemCountInput.value = itemCount;
+                    updateTotal();
+                });
+            });
+            
+            document.querySelectorAll('.product-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const row = this.closest('.order-item-row');
+                    const option = this.options[this.selectedIndex];
+                    const price = option.dataset.price || 0;
+                    const stock = option.dataset.stock || 0;
+                    
+                    const quantityInput = row.querySelector('.quantity-input');
+                    quantityInput.max = stock;
+                    
+                    if (quantityInput.value) {
+                        const total = price * quantityInput.value;
+                        row.querySelector('.item-price').textContent = `$${total.toFixed(2)}`;
+                    }
+                    
+                    updateTotal();
+                });
+            });
+            
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const row = this.closest('.order-item-row');
+                    const select = row.querySelector('.product-select');
+                    const option = select.options[select.selectedIndex];
+                    const price = option.dataset.price || 0;
+                    
+                    const total = price * this.value;
+                    row.querySelector('.item-price').textContent = `$${total.toFixed(2)}`;
+                    
+                    updateTotal();
+                });
+            });
+        }
+        
+        // Calculate order total
+        function updateTotal() {
+            let total = 0;
+            
+            document.querySelectorAll('.order-item-row').forEach(row => {
+                const select = row.querySelector('.product-select');
+                const quantityInput = row.querySelector('.quantity-input');
+                
+                if (select.value && quantityInput.value) {
+                    const option = select.options[select.selectedIndex];
+                    const price = option.dataset.price || 0;
+                    total += price * quantityInput.value;
+                }
+            });
+            
+            document.getElementById('order-total').textContent = `$${total.toFixed(2)}`;
+        }
+        
+        // Initialize event listeners
+        addEventListeners();
+    });
+</script>
+{% endif %}
+{% endblock %}

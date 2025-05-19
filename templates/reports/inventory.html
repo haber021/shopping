@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load shop_tags %}
+
+{% block title %}Inventory Report{% endblock %}
+
+{% block header_title %}Inventory Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Inventory Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted">Total Inventory Value</h6>
+                                <h3 class="mb-0">{{ total_inventory_value|currency }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted">Low Stock Items</h6>
+                                <h3 class="mb-0">{{ needs_restocking|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Inventory Status</h6>
+                        <div class="progress mt-2" style="height: 25px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">
+                                Healthy
+                            </div>
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">
+                                Low
+                            </div>
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 10%;" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100">
+                                Out
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Products by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="productsByCategoryChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Low Stock by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="lowStockChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Products Needing Restock</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-center">Current Stock</th>
+                                    <th class="text-center">Reorder Level</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in needs_restocking %}
+                                <tr>
+                                    <td>{{ product.name }}</td>
+                                    <td class="text-center">
+                                        <span class="{% if product.stock <= 0 %}text-danger{% else %}text-warning{% endif %}">
+                                            {{ product.stock }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">{{ product.reorder_level }}</td>
+                                    <td class="text-end">
+                                        <a href="{% url 'shop:inventory_restock' product.id %}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-plus-circle"></i> Restock
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">No products need restocking</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Inventory by Category</h5>
+            <button class="btn btn-sm btn-outline-secondary disabled">
+                <i class="fas fa-download me-1"></i> Export
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Category</th>
+                            <th class="text-center">Products Count</th>
+                            <th class="text-center">Low Stock Items</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in products_by_category %}
+                        <tr>
+                            <td>{{ category.category__name|default:"Uncategorized" }}</td>
+                            <td class="text-center">{{ category.count }}</td>
+                            <td class="text-center">
+                                {% for low_category in low_stock_by_category %}
+                                    {% if low_category.category__name == category.category__name %}
+                                        <span class="badge bg-warning">{{ low_category.count }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-3">No category data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Products by Category Chart
+        const categoryCtx = document.getElementById('productsByCategoryChart').getContext('2d');
+        const categoryLabels = [
+            {% for item in products_by_category %}
+                "{{ item.category__name|default:'Uncategorized' }}",
+            {% endfor %}
+        ];
+        const categoryData = [
+            {% for item in products_by_category %}
+                {{ item.count }},
+            {% endfor %}
+        ];
+        
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    data: categoryData,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)',
+                        'rgba(201, 203, 207, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        
+        // Low Stock by Category Chart
+        const lowStockCtx = document.getElementById('lowStockChart').getContext('2d');
+        const lowStockLabels = [
+            {% for item in low_stock_by_category %}
+                "{{ item.category__name|default:'Uncategorized' }}",
+            {% endfor %}
+        ];
+        const lowStockData = [
+            {% for item in low_stock_by_category %}
+                {{ item.count }},
+            {% endfor %}
+        ];
+        
+        new Chart(lowStockCtx, {
+            type: 'bar',
+            data: {
+                labels: lowStockLabels,
+                datasets: [{
+                    label: 'Low Stock Items',
+                    data: lowStockData,
+                    backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

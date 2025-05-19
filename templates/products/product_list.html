@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Products | ERP Shopping System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Products</h1>
+        <a href="{% url 'product-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add New Product
+        </a>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form action="{% url 'product-list' %}" method="GET" class="filter-form">
+                <div class="form-group">
+                    <label for="category" class="form-label">Category</label>
+                    <select name="category" id="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"i" %}selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" name="search" id="search" class="form-control" placeholder="Search products..." value="{{ request.GET.search|default:'' }}">
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="{% url 'product-list' %}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Products Table -->
+    <div class="card">
+        <div class="card-header">
+            <span>Product List</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Image</th>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.id }}</td>
+                            <td>
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-thumbnail" style="max-width: 50px; max-height: 50px;">
+                                {% else %}
+                                    {% if product.image %}
+                                        <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded">
+                                    {% else %}
+                                        <div class="text-center bg-light" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-image text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.category.name|default:'No Category' }}</td>
+                            <td>${{ product.price|floatformat:2 }}</td>
+                            <td class="{{ product.current_stock|yesno:'text-success,text-danger' }}">
+                                {{ product.current_stock }} units
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{% url 'product-detail' product.id %}" class="table-action-btn view" data-bs-toggle="tooltip" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'product-update' product.id %}" class="table-action-btn edit" data-bs-toggle="tooltip" title="Edit Product">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'product-delete' product.id %}" class="table-action-btn delete" data-bs-toggle="tooltip" title="Delete Product">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No products found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Detail Modal -->
+    <div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Product Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="productDetailContent">
+                    <!-- Content will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // HTMX is handling most of the modal loading, but we need to show the modal
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            if (event.detail.target.id === 'productDetailContent') {
+                const modal = new bootstrap.Modal(document.getElementById('productDetailModal'));
+                modal.show();
+            }
+        });
+    });
+</script>
+{% endblock %}

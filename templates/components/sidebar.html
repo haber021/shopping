@@ -1,0 +1,102 @@
+{% load static %}
+
+<nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+    <div class="position-sticky pt-3">
+        <div class="text-center mb-4">
+            <h2 class="h5">ERP System</h2>
+        </div>
+        
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.namespace == 'online_retail_dash' %}active{% endif %}" href="{% url 'online_retail_dash:home' %}">
+                    🛍️ Online Retail Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'shop:dashboard' %}">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Customer Sales Dashboard
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if '/products/' in request.path %}active{% endif %}" href="{% url 'shop:product_list' %}">
+                    <i class="fas fa-box me-2"></i>
+                    Products
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if '/orders/' in request.path %}active{% endif %}" href="{% url 'shop:order_list' %}">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    Orders
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if '/inventory/' in request.path %}active{% endif %}" href="{% url 'shop:inventory_list' %}">
+                    <i class="fas fa-warehouse me-2"></i>
+                    Inventory
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if '/suppliers/' in request.path %}active{% endif %}" href="{% url 'shop:supplier_list' %}">
+                    <i class="fas fa-truck me-2"></i>
+                    Suppliers
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if '/customers/' in request.path %}active{% endif %}" href="{% url 'shop:customer_list' %}">
+                    <i class="fas fa-users me-2"></i>
+                    Customers
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if '/reports/' in request.path %}active{% endif %}" href="{% url 'shop:report_index' %}">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Reports
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.namespace == 'core_payroll' %}active{% endif %}" href="{% url 'core_payroll:dashboard' %}">
+                    <i class="fas fa-money-check-alt me-2"></i>  <!-- Payroll icon -->
+                    Payroll
+                </a>
+            </li>
+             <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.namespace == 'CRM' %}active{% endif %}" href="{% url 'CRM:dashboard' %}">
+                    <i class="fas fa-star me-2"></i>  <!-- Payroll icon -->
+                    CRM
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.namespace == 'hr_dash' %}active{% endif %}" href="{% url 'hr_dashboard:dashboard' %}">
+                    <i class="fas fa-users me-2"></i>  <!-- Payroll icon -->
+                    HRM
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.namespace == 'PS' %}active{% endif %}" href="{% url 'ps:dashboard' %}">
+                    <i class="fas fa-clipboard-list me-2"></i>  <!-- Procurement icon -->
+                    Procurement
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if '/settings/' in request.path %}active{% endif %}" href="{% url 'shop:settings_general' %}">
+                    <i class="fas fa-cog me-2"></i>
+                    Settings
+                </a>
+            </li>
+        </ul>
+        <hr>
+        
+        <div class="d-flex justify-content-center">
+            <a href="{% url 'admin:logout' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-sign-out-alt me-2"></i> Logout
+            </a>
+        </div>
+    </div>
+</nav>

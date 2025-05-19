@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Products - Retail ERP System{% endblock %}
+
+{% block header_title %}Product Management{% endblock %}
+
+{% block header_buttons %}
+<a href="{% url 'retail:product_add' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i> Add Product
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5 class="mb-0">Product Catalog</h5>
+            </div>
+            <div class="col-auto">
+                <form class="d-flex" method="get">
+                    <input type="text" name="search" class="form-control me-2" placeholder="Search products...">
+                    <select name="category" class="form-select me-2">
+                        <option value="">All Categories</option>
+                        <!-- Categories will go here -->
+                    </select>
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>SKU</th>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <p class="text-muted mb-0">No products found. Add your first product using the button above.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Products page loaded successfully');
+    });
+</script>
+{% endblock %}

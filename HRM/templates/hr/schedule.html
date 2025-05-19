@@ -1,0 +1,518 @@
+{% extends 'hrm_base.html' %}
+
+{% block title %}Schedule Management - HR System{% endblock %}
+
+{% block header_title %}Schedule Management{% endblock %}
+
+{% block header_buttons %}
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
+    <i class="fas fa-plus me-2"></i> Add Schedule
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">Schedule Dashboard</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <form class="d-flex" method="get">
+                            <input type="date" name="date" class="form-control me-2" value="{{ selected_date|date:'Y-m-d' }}">
+                            <select name="department" class="form-select me-2">
+                                <option value="">All Departments</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.id }}" {% if selected_department_id == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <!-- Weekly Calendar View -->
+                <div class="mb-4">
+                    <h5 class="mb-3">Weekly Schedule Overview</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    {% for day, schedules in weekly_schedules.items %}
+                                    <th class="text-center">{{ day }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    {% for day, schedules in weekly_schedules.items %}
+                                    <td class="calendar-day">
+                                        <div class="calendar-day-content">
+                                            {% if schedules %}
+                                                {% for schedule in schedules|slice:":3" %}
+                                                <div class="calendar-event" style="background-color: 
+                                                    {% if schedule.shift_type == 'Morning' %}#28a745{% endif %}
+                                                    {% if schedule.shift_type == 'Afternoon' %}#0d6efd{% endif %}
+                                                    {% if schedule.shift_type == 'Evening' %}#17a2b8{% endif %}
+                                                    {% if schedule.shift_type == 'Night' %}#6c757d{% endif %}
+                                                    {% if schedule.shift_type == 'Custom' %}#fd7e14{% endif %}
+                                                ">
+                                                    {{ schedule.employee.first_name }} {{ schedule.employee.last_name|first }}.
+                                                    <small>({{ schedule.start_time|time:"g:i A" }}-{{ schedule.end_time|time:"g:i A" }})</small>
+                                                </div>
+                                                {% endfor %}
+                                                
+                                                {% if schedules.count > 3 %}
+                                                <div class="text-center mt-1">
+                                                    <small>+{{ schedules.count|add:"-3" }} more</small>
+                                                </div>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="text-center text-muted pt-3">
+                                                    <small>No schedules</small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Shift Legend -->
+                <div class="mb-4">
+                    <h5 class="mb-3">Shift Legend</h5>
+                    <div class="d-flex flex-wrap">
+                        <div class="me-3 mb-2 d-flex align-items-center">
+                            <div style="width: 20px; height: 20px; background-color: #28a745; border-radius: 3px;" class="me-2"></div>
+                            <span>Morning Shift</span>
+                        </div>
+                        <div class="me-3 mb-2 d-flex align-items-center">
+                            <div style="width: 20px; height: 20px; background-color: #0d6efd; border-radius: 3px;" class="me-2"></div>
+                            <span>Afternoon Shift</span>
+                        </div>
+                        <div class="me-3 mb-2 d-flex align-items-center">
+                            <div style="width: 20px; height: 20px; background-color: #17a2b8; border-radius: 3px;" class="me-2"></div>
+                            <span>Evening Shift</span>
+                        </div>
+                        <div class="me-3 mb-2 d-flex align-items-center">
+                            <div style="width: 20px; height: 20px; background-color: #6c757d; border-radius: 3px;" class="me-2"></div>
+                            <span>Night Shift</span>
+                        </div>
+                        <div class="me-3 mb-2 d-flex align-items-center">
+                            <div style="width: 20px; height: 20px; background-color: #fd7e14; border-radius: 3px;" class="me-2"></div>
+                            <span>Custom Hours</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Daily Schedule List -->
+                <h5 class="mb-3">Schedules for {{ selected_date|date:"F d, Y" }}</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="scheduleTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Employee</th>
+                                <th>Department</th>
+                                <th>Shift Type</th>
+                                <th>Time</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in employee_schedules %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="employee-avatar me-2">
+                                            {{ item.employee.first_name|first }}{{ item.employee.last_name|first }}
+                                        </div>
+                                        <div>
+                                            <a href="{% url 'hr:employee_detail' item.employee.id %}" class="text-decoration-none">
+                                                {{ item.employee.first_name }} {{ item.employee.last_name }}
+                                            </a>
+                                            <div class="small text-muted">{{ item.employee.employee_id }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ item.employee.department.name|default:"Not Assigned" }}</td>
+                                <td>
+                                    {% if item.schedule %}
+                                        {% if item.schedule.shift_type == 'Morning' %}
+                                        <span class="badge bg-success">{{ item.schedule.shift_type }}</span>
+                                        {% elif item.schedule.shift_type == 'Afternoon' %}
+                                        <span class="badge bg-primary">{{ item.schedule.shift_type }}</span>
+                                        {% elif item.schedule.shift_type == 'Evening' %}
+                                        <span class="badge bg-info">{{ item.schedule.shift_type }}</span>
+                                        {% elif item.schedule.shift_type == 'Night' %}
+                                        <span class="badge bg-secondary">{{ item.schedule.shift_type }}</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">{{ item.schedule.shift_type }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">Not Scheduled</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.schedule %}
+                                        {{ item.schedule.start_time|time:"g:i A" }} - {{ item.schedule.end_time|time:"g:i A" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.schedule %}
+                                        {{ item.schedule.notes|truncatechars:30|default:"-" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.schedule %}
+                                    <button class="btn btn-sm btn-outline-primary edit-schedule-btn" 
+                                            data-employee-id="{{ item.employee.id }}"
+                                            data-employee-name="{{ item.employee.first_name }} {{ item.employee.last_name }}"
+                                            data-shift-type="{{ item.schedule.shift_type }}"
+                                            data-start-time="{{ item.schedule.start_time|time:'H:i' }}"
+                                            data-end-time="{{ item.schedule.end_time|time:'H:i' }}"
+                                            data-notes="{{ item.schedule.notes }}"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editScheduleModal">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-outline-success add-schedule-btn" 
+                                            data-employee-id="{{ item.employee.id }}"
+                                            data-employee-name="{{ item.employee.first_name }} {{ item.employee.last_name }}"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#addScheduleModal">
+                                        <i class="fas fa-plus"></i> Schedule
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Schedule Section -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Bulk Schedule Assignment</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="bulkScheduleForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="bulk_schedule" value="1">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Date</label>
+                            {{ bulk_form.date }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Department</label>
+                            {{ bulk_form.department }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Shift Type</label>
+                            {{ bulk_form.shift_type }}
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" id="loadEmployeesForScheduleBtn" class="btn btn-outline-primary">
+                                Load Employees
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Start Time</label>
+                            {{ bulk_form.start_time }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">End Time</label>
+                            {{ bulk_form.end_time }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Notes</label>
+                            {{ bulk_form.notes }}
+                        </div>
+                    </div>
+                    
+                    <div id="bulkScheduleContainer" class="d-none">
+                        <h6>Select Employees to Schedule</h6>
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="bulkScheduleTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="selectAllEmployees">
+                                                <label class="form-check-label" for="selectAllEmployees">Select All</label>
+                                            </div>
+                                        </th>
+                                        <th>Employee</th>
+                                        <th>Department</th>
+                                        <th>Current Schedule</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bulkScheduleBody">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                Assign Schedule
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Schedule Modal -->
+<div class="modal fade" id="addScheduleModal" tabindex="-1" aria-labelledby="addScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addScheduleModalLabel">Add Schedule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="single_schedule" value="1">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Employee</label>
+                        <select name="employee" class="form-select" id="scheduleEmployeeSelect" required>
+                            <option value="">Select Employee</option>
+                            {% for item in employee_schedules %}
+                            <option value="{{ item.employee.id }}">{{ item.employee.first_name }} {{ item.employee.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Shift Type</label>
+                        <select name="shift_type" class="form-select" required>
+                            {% for shift_type, shift_name in shift_types %}
+                            <option value="{{ shift_type }}">{{ shift_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Start Time</label>
+                                <input type="time" name="start_time" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">End Time</label>
+                                <input type="time" name="end_time" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Schedule Modal -->
+<div class="modal fade" id="editScheduleModal" tabindex="-1" aria-labelledby="editScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editScheduleModalLabel">Edit Schedule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="single_schedule" value="1">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Employee</label>
+                        <input type="text" class="form-control" id="editEmployeeName" readonly>
+                        <input type="hidden" name="employee" id="editEmployeeId">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Shift Type</label>
+                        <select name="shift_type" class="form-select" id="editShiftType" required>
+                            {% for shift_type, shift_name in shift_types %}
+                            <option value="{{ shift_type }}">{{ shift_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Start Time</label>
+                                <input type="time" name="start_time" class="form-control" id="editStartTime" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">End Time</label>
+                                <input type="time" name="end_time" class="form-control" id="editEndTime" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control" rows="3" id="editNotes"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle Edit Schedule modal
+        const editScheduleButtons = document.querySelectorAll('.edit-schedule-btn');
+        editScheduleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const employeeId = this.dataset.employeeId;
+                const employeeName = this.dataset.employeeName;
+                const shiftType = this.dataset.shiftType;
+                const startTime = this.dataset.startTime;
+                const endTime = this.dataset.endTime;
+                const notes = this.dataset.notes;
+                
+                document.getElementById('editEmployeeId').value = employeeId;
+                document.getElementById('editEmployeeName').value = employeeName;
+                document.getElementById('editShiftType').value = shiftType;
+                document.getElementById('editStartTime').value = startTime;
+                document.getElementById('editEndTime').value = endTime;
+                document.getElementById('editNotes').value = notes;
+            });
+        });
+        
+        // Handle Add Schedule modal for specific employee
+        const addScheduleButtons = document.querySelectorAll('.add-schedule-btn');
+        addScheduleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const employeeId = this.dataset.employeeId;
+                document.getElementById('scheduleEmployeeSelect').value = employeeId;
+            });
+        });
+        
+        // Bulk Schedule Functions
+        const loadEmployeesBtn = document.getElementById('loadEmployeesForScheduleBtn');
+        const bulkScheduleContainer = document.getElementById('bulkScheduleContainer');
+        const bulkScheduleBody = document.getElementById('bulkScheduleBody');
+        const selectAllCheckbox = document.getElementById('selectAllEmployees');
+        
+        loadEmployeesBtn.addEventListener('click', function() {
+            const departmentId = document.querySelector('select[name="department"]').value;
+            const date = document.querySelector('input[name="date"]').value;
+            
+            // Show the container
+            bulkScheduleContainer.classList.remove('d-none');
+            
+            // Clear existing rows
+            bulkScheduleBody.innerHTML = '';
+            
+            // Add rows for each employee
+            {% for item in employee_schedules %}
+            const employee{{ item.employee.id }} = {
+                id: {{ item.employee.id }},
+                name: "{{ item.employee.first_name }} {{ item.employee.last_name }}",
+                department: "{{ item.employee.department.name|default:'Not Assigned' }}",
+                hasSchedule: {% if item.schedule %}true{% else %}false{% endif %},
+                scheduleInfo: {% if item.schedule %}"{{ item.schedule.shift_type }} ({{ item.schedule.start_time|time:'g:i A' }} - {{ item.schedule.end_time|time:'g:i A' }})"{% else %}""{% endif %}
+            };
+            
+            if (!departmentId || employee{{ item.employee.id }}.department === document.querySelector('select[name="department"] option:checked').text) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input employee-checkbox" type="checkbox" id="employee_{{ item.employee.id }}" name="schedule_{{ item.employee.id }}" ${employee{{ item.employee.id }}.hasSchedule ? '' : 'checked'}>
+                            <label class="form-check-label" for="employee_{{ item.employee.id }}"></label>
+                        </div>
+                    </td>
+                    <td>${employee{{ item.employee.id }}.name}</td>
+                    <td>${employee{{ item.employee.id }}.department}</td>
+                    <td>${employee{{ item.employee.id }}.hasSchedule ? employee{{ item.employee.id }}.scheduleInfo : '<span class="text-muted">Not Scheduled</span>'}</td>
+                `;
+                bulkScheduleBody.appendChild(row);
+            }
+            {% endfor %}
+            
+            // Initialize "Select All" checkbox
+            updateSelectAllCheckbox();
+        });
+        
+        // Select All functionality
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            const employeeCheckboxes = document.querySelectorAll('.employee-checkbox');
+            
+            employeeCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+        });
+        
+        // Update "Select All" checkbox state when individual checkboxes change
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.classList.contains('employee-checkbox')) {
+                updateSelectAllCheckbox();
+            }
+        });
+        
+        function updateSelectAllCheckbox() {
+            const checkboxes = document.querySelectorAll('.employee-checkbox');
+            const checkedBoxes = document.querySelectorAll('.employee-checkbox:checked');
+            
+            selectAllCheckbox.checked = checkboxes.length > 0 && checkboxes.length === checkedBoxes.length;
+            selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < checkboxes.length;
+        }
+    });
+</script>
+{% endblock %}

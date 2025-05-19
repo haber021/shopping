@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}Order #{{ order.id }} | ERP Shopping System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Order #{{ order.id }}</h1>
+        <div>
+            <button onclick="printElement('orderDetails')" class="btn btn-info me-2">
+                <i class="fas fa-print me-2"></i>Print
+            </button>
+            <a href="{% url 'order-list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Orders
+            </a>
+        </div>
+    </div>
+    
+    <div id="orderDetails" class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Order Information</span>
+                    <span class="badge bg-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="detail-section">
+                        <div class="detail-section-title">Order Summary</div>
+                        <div class="detail-item">
+                            <div class="detail-label">Order ID:</div>
+                            <div class="detail-value">#{{ order.id }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Date:</div>
+                            <div class="detail-value">{{ order.created_at|date:"F d, Y H:i" }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Total Amount:</div>
+                            <div class="detail-value">${{ order.total_amount|floatformat:2 }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Payment Method:</div>
+                            <div class="detail-value">{{ order.get_payment_method_display }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Status:</div>
+                            <div class="detail-value">
+                                <form action="{% url 'update-order-status' order.id %}" method="POST" class="d-flex align-items-center">
+                                    {% csrf_token %}
+                                    <select name="status" class="form-select me-2 order-status-select">
+                                        {% for status_code, status_name in order.STATUS_CHOICES %}
+                                        <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
+                                            {{ status_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-primary">Update</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section mt-4">
+                        <div class="detail-section-title">Order Items</div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'product-detail' item.product.id %}">{{ item.product.name }}</a>
+                                        </td>
+                                        <td>${{ item.price|floatformat:2 }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>${{ item.total_price|floatformat:2 }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No items in this order</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="3" class="text-end">Subtotal:</th>
+                                        <th>${{ order.total_amount|floatformat:2 }}</th>
+                                    </tr>
+                                    <tr>
+                                        <th colspan="3" class="text-end">Total:</th>
+                                        <th>${{ order.total_amount|floatformat:2 }}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <span>Shipping Information</span>
+                </div>
+                <div class="card-body">
+                    <div class="detail-section">
+                        <div class="detail-item">
+                            <div class="detail-label">Shipping Address:</div>
+                            <div class="detail-value">{{ order.shipping_address }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <span>Customer Information</span>
+                </div>
+                <div class="card-body">
+                    <div class="detail-section">
+                        <div class="detail-item">
+                            <div class="detail-label">Name:</div>
+                            <div class="detail-value">
+                                <a href="{% url 'customer-detail' order.customer.id %}">{{ order.customer.name }}</a>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Email:</div>
+                            <div class="detail-value">{{ order.customer.email }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Phone:</div>
+                            <div class="detail-value">{{ order.customer.phone }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Total Orders:</div>
+                            <div class="detail-value">{{ order.customer.total_orders }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span>Order Timeline</span>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="timeline-icon bg-primary">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <div class="fw-bold">Order Placed</div>
+                                    <div class="text-muted">{{ order.created_at|date:"M d, Y H:i" }}</div>
+                                </div>
+                            </div>
+                        </li>
+                        {% if order.status != 'PENDING' %}
+                        <li class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="timeline-icon bg-info">
+                                    <i class="fas fa-cog"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <div class="fw-bold">Processing</div>
+                                    <div class="text-muted">{{ order.updated_at|date:"M d, Y H:i" }}</div>
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if order.status == 'SHIPPED' or order.status == 'DELIVERED' %}
+                        <li class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="timeline-icon bg-warning">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <div class="fw-bold">Shipped</div>
+                                    <div class="text-muted">{{ order.updated_at|date:"M d, Y H:i" }}</div>
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if order.status == 'DELIVERED' %}
+                        <li class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="timeline-icon bg-success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <div class="fw-bold">Delivered</div>
+                                    <div class="text-muted">{{ order.updated_at|date:"M d, Y H:i" }}</div>
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if order.status == 'CANCELLED' %}
+                        <li class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="timeline-icon bg-danger">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <div class="fw-bold">Cancelled</div>
+                                    <div class="text-muted">{{ order.updated_at|date:"M d, Y H:i" }}</div>
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle status update form submission with AJAX
+        const statusForm = document.querySelector('form[action*="update-order-status"]');
+        const statusSelect = document.querySelector('.order-status-select');
+        
+        if (statusForm && statusSelect) {
+            statusSelect.addEventListener('change', function() {
+                statusForm.submit();
+            });
+        }
+    });
+</script>
+{% endblock %}

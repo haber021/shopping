@@ -1,0 +1,539 @@
+{% extends 'hrm_base.html' %}
+
+{% block title %}Attendance Management - HR System{% endblock %}
+
+{% block header_title %}Attendance Management{% endblock %}
+
+{% block header_buttons %}
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#markAttendanceModal">
+    <i class="fas fa-plus me-2"></i> Mark Attendance
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">Attendance Dashboard</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <form class="d-flex" method="get">
+                            <input type="date" name="date" class="form-control me-2" value="{{ selected_date|date:'Y-m-d' }}">
+                            <select name="department" class="form-select me-2">
+                                <option value="">All Departments</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.id }}" {% if selected_department_id == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <h5 class="mb-3">Statistics for {{ selected_date|date:"F d, Y" }}</h5>
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card stat-card stat-card-success">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-0">Present</h6>
+                                <div class="stat-number">{{ present_count }}</div>
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ present_percentage }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card stat-card-warning">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-0">Late</h6>
+                                <div class="stat-number">{{ late_count }}</div>
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ late_percentage }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card stat-card-danger">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-0">Absent</h6>
+                                <div class="stat-number">{{ absent_count }}</div>
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ absent_percentage }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card stat-card-primary">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-0">Total Active</h6>
+                                <div class="stat-number">{{ employee_attendance|length }}</div>
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Weekly Attendance Trend -->
+                <h5 class="mb-3">Weekly Attendance Overview</h5>
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <canvas id="weeklyAttendanceChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">This Week Summary</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-striped mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Day</th>
+                                            <th>Present</th>
+                                            <th>%</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for i in "0123456"|make_list %}
+                                            <tr>
+                                                <td>{{ weekly_data.days|get_item:i }}</td>
+                                                <td>{{ weekly_data.present_counts|get_item:i }}</td>
+                                                <td>{{ weekly_data.present_percentages|get_item:i }}%</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Attendance List -->
+                <h5 class="mb-3">Attendance List for {{ selected_date|date:"F d, Y" }}</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="attendanceTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Employee</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Time In</th>
+                                <th>Time Out</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in employee_attendance %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="employee-avatar me-2">
+                                            {{ item.employee.first_name|first }}{{ item.employee.last_name|first }}
+                                        </div>
+                                        <div>
+                                            <a href="{% url 'hr:employee_detail' item.employee.id %}" class="text-decoration-none">
+                                                {{ item.employee.first_name }} {{ item.employee.last_name }}
+                                            </a>
+                                            <div class="small text-muted">{{ item.employee.employee_id }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ item.employee.department.name|default:"Not Assigned" }}</td>
+                                <td>
+                                    {% if item.status == 'Present' %}
+                                    <span class="attendance-status-present">{{ item.status }}</span>
+                                    {% elif item.status == 'Late' %}
+                                    <span class="attendance-status-late">{{ item.status }}</span>
+                                    {% elif item.status == 'Absent' %}
+                                    <span class="attendance-status-absent">{{ item.status }}</span>
+                                    {% elif item.status == 'Half Day' %}
+                                    <span class="attendance-status-half-day">{{ item.status }}</span>
+                                    {% else %}
+                                    <span class="attendance-status-not-marked">{{ item.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.record.time_in|time:"g:i A"|default:"-" }}</td>
+                                <td>{{ item.record.time_out|time:"g:i A"|default:"-" }}</td>
+                                <td>
+                                    {% if item.record %}
+                                    <button class="btn btn-sm btn-outline-primary edit-attendance-btn" 
+                                            data-employee-id="{{ item.employee.id }}"
+                                            data-employee-name="{{ item.employee.first_name }} {{ item.employee.last_name }}"
+                                            data-status="{{ item.record.status }}"
+                                            data-time-in="{{ item.record.time_in|time:'H:i'|default:'' }}"
+                                            data-time-out="{{ item.record.time_out|time:'H:i'|default:'' }}"
+                                            data-notes="{{ item.record.notes }}"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editAttendanceModal">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-outline-success mark-attendance-btn" 
+                                            data-employee-id="{{ item.employee.id }}"
+                                            data-employee-name="{{ item.employee.first_name }} {{ item.employee.last_name }}"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#markAttendanceModal">
+                                        <i class="fas fa-check"></i> Mark
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Attendance Section -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Bulk Attendance Entry</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="bulkAttendanceForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="bulk_attendance" value="1">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Date</label>
+                            {{ bulk_form.date }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Filter by Department</label>
+                            {{ bulk_form.department }}
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="button" id="loadEmployeesBtn" class="btn btn-outline-primary">
+                                Load Employees
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="bulkAttendanceContainer" class="d-none">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="bulkAttendanceTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Department</th>
+                                        <th>Status</th>
+                                        <th>Time In</th>
+                                        <th>Time Out</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bulkAttendanceBody">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-3">
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="markAllPresentBtn">
+                                    Mark All Present
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="markAllAbsentBtn">
+                                    Mark All Absent
+                                </button>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                Save Bulk Attendance
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mark Attendance Modal -->
+<div class="modal fade" id="markAttendanceModal" tabindex="-1" aria-labelledby="markAttendanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="markAttendanceModalLabel">Mark Attendance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="single_attendance" value="1">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Employee</label>
+                        <select name="employee" class="form-select" id="attendanceEmployeeSelect" required>
+                            <option value="">Select Employee</option>
+                            {% for item in employee_attendance %}
+                            <option value="{{ item.employee.id }}">{{ item.employee.first_name }} {{ item.employee.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select" required>
+                            <option value="Present">Present</option>
+                            <option value="Late">Late</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Half Day">Half Day</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Time In</label>
+                                <input type="time" name="time_in" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Time Out</label>
+                                <input type="time" name="time_out" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Attendance Modal -->
+<div class="modal fade" id="editAttendanceModal" tabindex="-1" aria-labelledby="editAttendanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAttendanceModalLabel">Edit Attendance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="single_attendance" value="1">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Employee</label>
+                        <input type="text" class="form-control" id="editEmployeeName" readonly>
+                        <input type="hidden" name="employee" id="editEmployeeId">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select" id="editAttendanceStatus" required>
+                            <option value="Present">Present</option>
+                            <option value="Late">Late</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Half Day">Half Day</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Time In</label>
+                                <input type="time" name="time_in" class="form-control" id="editTimeIn">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Time Out</label>
+                                <input type="time" name="time_out" class="form-control" id="editTimeOut">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control" rows="3" id="editNotes"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Weekly Attendance Chart
+        const ctx = document.getElementById('weeklyAttendanceChart').getContext('2d');
+        const weeklyAttendanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ weekly_data.days|safe }},
+                datasets: [{
+                    label: 'Attendance Percentage',
+                    data: {{ weekly_data.present_percentages|safe }},
+                    backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: 'rgba(40, 167, 69, 1)',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 0,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Attendance Percentage (%)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Present: ${context.raw}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Handle Edit Attendance modal
+        const editAttendanceButtons = document.querySelectorAll('.edit-attendance-btn');
+        editAttendanceButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const employeeId = this.dataset.employeeId;
+                const employeeName = this.dataset.employeeName;
+                const status = this.dataset.status;
+                const timeIn = this.dataset.timeIn;
+                const timeOut = this.dataset.timeOut;
+                const notes = this.dataset.notes;
+                
+                document.getElementById('editEmployeeId').value = employeeId;
+                document.getElementById('editEmployeeName').value = employeeName;
+                document.getElementById('editAttendanceStatus').value = status;
+                document.getElementById('editTimeIn').value = timeIn;
+                document.getElementById('editTimeOut').value = timeOut;
+                document.getElementById('editNotes').value = notes;
+            });
+        });
+        
+        // Handle Mark Attendance modal for specific employee
+        const markAttendanceButtons = document.querySelectorAll('.mark-attendance-btn');
+        markAttendanceButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const employeeId = this.dataset.employeeId;
+                document.getElementById('attendanceEmployeeSelect').value = employeeId;
+            });
+        });
+        
+        // Bulk Attendance Functions
+        const loadEmployeesBtn = document.getElementById('loadEmployeesBtn');
+        const bulkAttendanceContainer = document.getElementById('bulkAttendanceContainer');
+        const bulkAttendanceBody = document.getElementById('bulkAttendanceBody');
+        const markAllPresentBtn = document.getElementById('markAllPresentBtn');
+        const markAllAbsentBtn = document.getElementById('markAllAbsentBtn');
+        
+        loadEmployeesBtn.addEventListener('click', function() {
+            const departmentId = document.querySelector('#id_department').value;
+            const date = document.querySelector('#id_date').value;
+            
+            // Show the container
+            bulkAttendanceContainer.classList.remove('d-none');
+            
+            // Clear existing rows
+            bulkAttendanceBody.innerHTML = '';
+            
+            // Add rows for each employee
+            {% for item in employee_attendance %}
+            const employee{{ item.employee.id }} = {
+                id: {{ item.employee.id }},
+                name: "{{ item.employee.first_name }} {{ item.employee.last_name }}",
+                department: "{{ item.employee.department.name|default:'Not Assigned' }}",
+                status: "{{ item.status }}",
+                has_record: {% if item.record %}true{% else %}false{% endif %}
+            };
+            
+            if (!departmentId || employee{{ item.employee.id }}.department === document.querySelector('#id_department option:checked').text) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${employee{{ item.employee.id }}.name}</td>
+                    <td>${employee{{ item.employee.id }}.department}</td>
+                    <td>
+                        <select name="status_${employee{{ item.employee.id }}.id}" class="form-select form-select-sm">
+                            <option value="Present" ${employee{{ item.employee.id }}.status === "Present" ? "selected" : ""}>Present</option>
+                            <option value="Late" ${employee{{ item.employee.id }}.status === "Late" ? "selected" : ""}>Late</option>
+                            <option value="Absent" ${employee{{ item.employee.id }}.status === "Absent" ? "selected" : ""}>Absent</option>
+                            <option value="Half Day" ${employee{{ item.employee.id }}.status === "Half Day" ? "selected" : ""}>Half Day</option>
+                            <option value="" ${employee{{ item.employee.id }}.status === "Not Marked" ? "selected" : ""}>Not Marked</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="time" name="time_in_${employee{{ item.employee.id }}.id}" class="form-control form-control-sm">
+                    </td>
+                    <td>
+                        <input type="time" name="time_out_${employee{{ item.employee.id }}.id}" class="form-control form-control-sm">
+                    </td>
+                `;
+                bulkAttendanceBody.appendChild(row);
+            }
+            {% endfor %}
+        });
+        
+        // Mark all as present
+        markAllPresentBtn.addEventListener('click', function() {
+            const statusSelects = bulkAttendanceBody.querySelectorAll('select[name^="status_"]');
+            statusSelects.forEach(select => {
+                select.value = "Present";
+            });
+        });
+        
+        // Mark all as absent
+        markAllAbsentBtn.addEventListener('click', function() {
+            const statusSelects = bulkAttendanceBody.querySelectorAll('select[name^="status_"]');
+            statusSelects.forEach(select => {
+                select.value = "Absent";
+            });
+        });
+    });
+</script>
+{% endblock %}

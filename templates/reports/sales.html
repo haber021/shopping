@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load shop_tags %}
+
+{% block title %}Sales Report{% endblock %}
+
+{% block header_title %}Sales Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Date Range Selection</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form.start_date|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.end_date|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if report_generated %}
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted">Total Sales</h6>
+                                <h3 class="mb-0">{{ total_sales|currency }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted">Order Count</h6>
+                                <h3 class="mb-0">{{ order_count }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Report Period</h6>
+                        <p class="mb-0">{{ start_date|date:"M d, Y" }} - {{ end_date|date:"M d, Y" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Sales by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesByCategoryChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Sales Trend</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="salesTrendChart" height="300"></canvas>
+        </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Daily Sales Breakdown</h5>
+            <button class="btn btn-sm btn-outline-secondary disabled">
+                <i class="fas fa-download me-1"></i> Export
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th class="text-end">Sales Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales_by_day %}
+                        <tr>
+                            <td>{{ sale.order_date__date|date:"M d, Y" }}</td>
+                            <td class="text-end">{{ sale.total|currency }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center py-3">No sales data available for this period</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if report_generated %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sales by Category Chart
+        const categoryCtx = document.getElementById('salesByCategoryChart').getContext('2d');
+        const categoryLabels = [
+            {% for item in sales_by_category %}
+                "{{ item.product__category__name|default:'Uncategorized' }}",
+            {% endfor %}
+        ];
+        const categoryData = [
+            {% for item in sales_by_category %}
+                {{ item.total }},
+            {% endfor %}
+        ];
+        
+        new Chart(categoryCtx, {
+            type: 'pie',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    data: categoryData,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)',
+                        'rgba(201, 203, 207, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        
+        // Sales Trend Chart
+        const trendCtx = document.getElementById('salesTrendChart').getContext('2d');
+        const trendLabels = [
+            {% for sale in sales_by_day %}
+                "{{ sale.order_date__date|date:'M d' }}",
+            {% endfor %}
+        ];
+        const trendData = [
+            {% for sale in sales_by_day %}
+                {{ sale.total }},
+            {% endfor %}
+        ];
+        
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: 'Sales Amount',
+                    data: trendData,
+                    fill: false,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Amount ($)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Pay Head - RetailPay{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">Edit Pay Head</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'payroll:pay_heads' %}">Pay Heads</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Edit Pay Head: {{ pay_head.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Name*</label>
+                            {{ form.name.errors }}
+                            <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" 
+                                class="form-control {% if form.name.errors %}is-invalid{% endif %}"
+                                value="{{ form.name.value|default:'' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.type.id_for_label }}" class="form-label">Type*</label>
+                            {{ form.type.errors }}
+                            <select name="{{ form.type.name }}" id="{{ form.type.id_for_label }}" 
+                                    class="form-select {% if form.type.errors %}is-invalid{% endif %}" required>
+                                {% for type_value, type_label in form.type.field.choices %}
+                                    <option value="{{ type_value }}" {% if form.type.value == type_value %}selected{% endif %}>
+                                        {{ type_label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ form.description.errors }}
+                            <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" 
+                                    class="form-control {% if form.description.errors %}is-invalid{% endif %}" 
+                                    rows="3">{{ form.description.value|default:'' }}</textarea>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}" 
+                                class="form-check-input" {% if form.is_active.value %}checked{% endif %}>
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'payroll:pay_heads' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Update Pay Head</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/payroll.js"></script>
+{% endblock %}

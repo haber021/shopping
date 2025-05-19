@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}CRM - Task: {{ task.title }}{% endblock %}
+
+{% block authenticated_content %}
+<div class="container-fluid px-4">
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">Task Details</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ url_for('tasks') }}">Tasks</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ task.title }}</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <button type="button" class="btn btn-outline-danger"
+                    data-action="delete-task" 
+                    data-id="{{ task.id }}" 
+                    data-title="{{ task.title }}">
+                <i class="fas fa-trash me-1"></i> Delete
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Task form -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Task Information</h5>
+                    <div>
+                        <button type="button" class="btn btn-sm {% if task.status == 'Completed' %}btn-success{% else %}btn-outline-secondary{% endif %} task-status-toggle" data-task-id="{{ task.id }}">
+                            {% if task.status == 'Completed' %}
+                                <i class="fas fa-check me-1"></i> Completed
+                            {% else %}
+                                <i class="fas fa-circle me-1"></i> Mark as Complete
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="taskForm" action="{{ url_for('edit_task', task_id=task.id) }}" method="post" class="needs-validation" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Task Title <span class="text-danger">*</span></label>
+                            {{ form.title(class="form-control", id="title", required=True) }}
+                            <div class="invalid-feedback">Please provide a task title.</div>
+                            {% for error in form.title.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            {{ form.description(class="form-control", id="description", rows="3") }}
+                            {% for error in form.description.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="due_date" class="form-label">Due Date</label>
+                                {{ form.due_date(class="form-control", id="due_date", type="date") }}
+                                {% for error in form.due_date.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="task_type" class="form-label">Task Type <span class="text-danger">*</span></label>
+                                {{ form.task_type(class="form-select", id="task_type", required=True) }}
+                                <div class="invalid-feedback">Please select a task type.</div>
+                                {% for error in form.task_type.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="priority" class="form-label">Priority <span class="text-danger">*</span></label>
+                                {{ form.priority(class="form-select", id="priority", required=True) }}
+                                <div class="invalid-feedback">Please select a priority level.</div>
+                                {% for error in form.priority.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                {{ form.status(class="form-select", id="status", required=True) }}
+                                <div class="invalid-feedback">Please select a status.</div>
+                                {% for error in form.status.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="contact_id" class="form-label">Related Contact</label>
+                                {{ form.contact_id(class="form-select", id="contact_id") }}
+                                {% for error in form.contact_id.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="lead_id" class="form-label">Related Lead</label>
+                                {{ form.lead_id(class="form-select", id="lead_id") }}
+                                {% for error in form.lead_id.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Task details sidebar -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">Task Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary bg-gradient rounded-circle p-3 text-white">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="mb-0">{{ task.title }}</h5>
+                            <p class="text-muted mb-0">Created on {{ task.created_at.strftime('%b %d, %Y') }}</p>
+                        </div>
+                    </div>
+
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item bg-transparent px-0 d-flex justify-content-between">
+                            <span><i class="fas fa-calendar-alt me-2"></i> Due Date:</span>
+                            <span>{% if task.due_date %}{{ task.due_date.strftime('%b %d, %Y') }}{% else %}Not set{% endif %}</span>
+                        </li>
+                        <li class="list-group-item bg-transparent px-0 d-flex justify-content-between">
+                            <span><i class="fas fa-tag me-2"></i> Status:</span>
+                            <span class="badge {% if task.status == 'Completed' %}bg-success{% else %}bg-primary{% endif %}">
+                                {{ task.status }}
+                            </span>
+                        </li>
+                        <li class="list-group-item bg-transparent px-0 d-flex justify-content-between">
+                            <span><i class="fas fa-flag me-2"></i> Priority:</span>
+                            <span class="badge {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning{% else %}bg-info{% endif %}">
+                                {{ task.priority }}
+                            </span>
+                        </li>
+                        <li class="list-group-item bg-transparent px-0 d-flex justify-content-between">
+                            <span><i class="fas fa-tasks me-2"></i> Type:</span>
+                            <span>{{ task.task_type }}</span>
+                        </li>
+                    </ul>
+
+                    {% if task.contact %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-user me-2"></i> Related Contact:</h6>
+                            <a href="{{ url_for('edit_contact', contact_id=task.contact.id) }}" class="text-decoration-none d-block mb-1">
+                                {{ task.contact.first_name }} {{ task.contact.last_name }}
+                            </a>
+                            {% if task.contact.company %}
+                                <small class="text-muted">{{ task.contact.company }}</small>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if task.lead %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-funnel-dollar me-2"></i> Related Lead:</h6>
+                            <a href="{{ url_for('edit_lead', lead_id=task.lead.id) }}" class="text-decoration-none d-block mb-1">
+                                {{ task.lead.title }}
+                            </a>
+                            <small class="text-muted">Stage: {{ task.lead.stage }}</small>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent text-end">
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#activityModal">
+                        <i class="fas fa-plus me-1"></i> Log Activity
+                    </button>
+                </div>
+            </div>
+
+            <!-- Activity history -->
+            <div class="card border-0 shadow">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">Activity History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if activities %}
+                            {% for activity in activities %}
+                                <div class="list-group-item bg-transparent">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ activity.activity_type }}</h6>
+                                        <small class="text-muted">{{ activity.created_at.strftime('%b %d, %Y') }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ activity.description }}</p>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item bg-transparent text-center py-4">
+                                <p class="mb-0 text-muted">No activity history</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden form for delete action -->
+    <form id="deleteTaskForm" action="{{ url_for('delete_task', task_id=task.id) }}" method="post" style="display: none;"></form>
+
+    <!-- Toast container for notifications -->
+    <div id="toastContainer"></div>
+</div>
+
+<!-- Activity Modal -->
+<div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Log Activity for Task: {{ task.title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('log_activity') }}" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="activity_type" class="form-label">Activity Type</label>
+                        <select class="form-select" id="activity_type" name="activity_type" required>
+                            <option value="">-- Select Type --</option>
+                            <option value="Call">Call</option>
+                            <option value="Email">Email</option>
+                            <option value="Meeting">Meeting</option>
+                            <option value="Note">Note</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                    <input type="hidden" name="task_id" value="{{ task.id }}">
+                    <input type="hidden" name="contact_id" value="{{ task.contact_id or 0 }}">
+                    <input type="hidden" name="lead_id" value="{{ task.lead_id or 0 }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Log Activity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/tasks.js') }}"></script>
+{% endblock %}

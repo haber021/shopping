@@ -1,0 +1,98 @@
+/* ERP Shopping System - Customer CSS */
+
+/* General Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    background-color: #f8f9fa;
+}
+
+/* Product Cards */
+.product-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.product-image {
+    height: 200px;
+    object-fit: cover;
+}
+
+.product-card .text-center.p-4.bg-light {
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Product Detail */
+.product-detail-image {
+    height: 400px;
+    object-fit: contain;
+    background-color: #f8f9fa;
+}
+
+.product-detail-info {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.25rem;
+}
+
+/* Cart */
+.cart-item-image {
+    max-width: 80px;
+    max-height: 80px;
+    object-fit: cover;
+}
+
+.cart-summary {
+    position: sticky;
+    top: 2rem;
+}
+
+/* Checkout */
+.payment-method-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.payment-method-card.selected {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Order History */
+.order-card {
+    transition: transform 0.3s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-3px);
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .product-detail-image {
+        height: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    .product-image {
+        height: 150px;
+    }
+    
+    .product-detail-image {
+        height: 250px;
+    }
+}

@@ -1,0 +1,215 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Procurement System - Dashboard{% endblock %}
+
+{% block header %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <!-- Statistics Cards -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-left-primary h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col-auto">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Products</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_products }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-box fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-left-success h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col-auto">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Active Suppliers</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_suppliers }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-truck fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-left-info h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col-auto">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Pending Orders</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_orders }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-left-warning h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col-auto">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Low Stock Items</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ low_stock_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Low Stock Items -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Low Stock Items</h6>
+            </div>
+            <div class="card-body">
+                {% if low_stock_items %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Current Stock</th>
+                                <th>Min. Stock</th>
+                                <th>Status</th>
+                                <th>Supplier</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in low_stock_items %}
+                            <tr>
+                                <td>{{ item.name }} ({{ item.sku }})</td>
+                                <td>{{ item.current_stock }}</td>
+                                <td>{{ item.minimum_stock }}</td>
+                                <td>
+                                    <span class="status-{{ item.status }}">
+                                        {% if item.status == 'critical' %}
+                                            <i class="fas fa-exclamation-circle"></i> Critical
+                                        {% elif item.status == 'low' %}
+                                            <i class="fas fa-exclamation-triangle"></i> Low
+                                        {% else %}
+                                            <i class="fas fa-check-circle"></i> Normal
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ item.supplier.name }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-success"><i class="fas fa-check-circle"></i> All items are in stock.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+            </div>
+            <div class="card-body">
+                {% if recent_activities %}
+                <div class="activity-log">
+                    {% for activity in recent_activities %}
+                    <div class="activity-log-item">
+                        <div class="activity-type">
+                            {% if activity.type == 'order-created' %}
+                                <i class="fas fa-plus-circle text-success"></i>
+                            {% elif activity.type == 'order-updated' %}
+                                <i class="fas fa-edit text-info"></i>
+                            {% elif activity.type == 'inventory-updated' %}
+                                <i class="fas fa-warehouse text-primary"></i>
+                            {% elif activity.type == 'supplier-added' %}
+                                <i class="fas fa-truck-loading text-success"></i>
+                            {% elif activity.type == 'supplier-updated' %}
+                                <i class="fas fa-truck text-info"></i>
+                            {% elif activity.type == 'product-added' %}
+                                <i class="fas fa-box-open text-success"></i>
+                            {% elif activity.type == 'product-updated' %}
+                                <i class="fas fa-box text-info"></i>
+                            {% elif activity.type == 'low-stock' %}
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle text-secondary"></i>
+                            {% endif %}
+                            {{ activity.description }}
+                        </div>
+                        <div class="timestamp">{{ activity.timestamp|date:"F j, Y, g:i a" }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p>No recent activity.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notifications -->
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Notifications</h6>
+            </div>
+            <div class="card-body">
+                {% if notifications %}
+                <div class="list-group">
+                    {% for notification in notifications %}
+                    <div class="list-group-item list-group-item-action notification-item" id="notification-{{ notification.id }}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">
+                                {% if notification.type == 'low-stock' %}
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                {% elif notification.type == 'order-status' %}
+                                <i class="fas fa-clipboard-check text-info"></i>
+                                {% else %}
+                                <i class="fas fa-bell text-secondary"></i>
+                                {% endif %}
+                                {{ notification.type|title }}
+                            </h5>
+                            <small class="text-muted">{{ notification.timestamp|date:"F j, Y, g:i a" }}</small>
+                        </div>
+                        <p class="mb-1">{{ notification.message }}</p>
+                        <button class="btn btn-sm btn-outline-secondary btn-mark-read" data-notification-id="{{ notification.id }}">
+                            <i class="fas fa-check"></i> Mark as read
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p>No unread notifications.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize dashboard charts
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add chart initialization if needed
+    });
+</script>
+{% endblock %}

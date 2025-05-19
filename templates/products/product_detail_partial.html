@@ -1,0 +1,74 @@
+<div class="row">
+    <div class="col-md-6">
+        <div class="detail-section">
+            <div class="detail-section-title">Product Information</div>
+            <div class="detail-item">
+                <div class="detail-label">Product Name:</div>
+                <div class="detail-value">{{ product.name }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Category:</div>
+                <div class="detail-value">{{ product.category.name|default:'No Category' }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Price:</div>
+                <div class="detail-value">${{ product.price|floatformat:2 }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Description:</div>
+                <div class="detail-value">{{ product.description }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="detail-section">
+            <div class="detail-section-title">Inventory Status</div>
+            <div class="detail-item">
+                <div class="detail-label">Current Stock:</div>
+                <div class="detail-value">
+                    <span class="{% if product.current_stock == 0 %}text-danger{% elif product.current_stock <= product.inventory_set.first.reorder_level %}text-warning{% else %}text-success{% endif %}">
+                        {{ product.current_stock }} units
+                    </span>
+                </div>
+            </div>
+            
+            {% if product.inventory_set.first %}
+            <div class="detail-item">
+                <div class="detail-label">Reorder Level:</div>
+                <div class="detail-value">{{ product.inventory_set.first.reorder_level }} units</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Status:</div>
+                <div class="detail-value">
+                    {% if product.inventory_set.first.is_out_of_stock %}
+                        <span class="badge bg-danger">Out of Stock</span>
+                    {% elif product.inventory_set.first.is_low_stock %}
+                        <span class="badge bg-warning">Low Stock</span>
+                    {% else %}
+                        <span class="badge bg-success">In Stock</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if product.supplier %}
+        <div class="detail-section mt-3">
+            <div class="detail-section-title">Supplier Information</div>
+            <div class="detail-item">
+                <div class="detail-label">Supplier:</div>
+                <div class="detail-value">{{ product.supplier.name }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Contact:</div>
+                <div class="detail-value">{{ product.supplier.contact_person }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3 d-flex justify-content-end">
+    <a href="{% url 'product-detail' product.id %}" class="btn btn-primary">View Full Details</a>
+</div>

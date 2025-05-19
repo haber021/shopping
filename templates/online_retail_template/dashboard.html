@@ -1,0 +1,217 @@
+{% extends "layout.html" %}
+
+{% block title %}Summary Dashboard{% endblock %}
+
+{% load static %}
+
+{% block head_content %}
+    <!-- Additional dashboard-specific styles could go here -->
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Summary Dashboard</h1>
+        <div class="time-filters">
+            <button class="filter-btn active" data-period="today">Today</button>
+            <button class="filter-btn" data-period="yesterday">Yesterday</button>
+            <button class="filter-btn" data-period="week">Week</button>
+            <button class="filter-btn" data-period="month">Month</button>
+        </div>
+    </div>
+
+    <!-- KPI Cards Row -->
+    <div class="kpi-cards">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="kpi-content">
+                <h3>Total Orders</h3>
+                <p class="kpi-value" id="total-orders">0</p>
+                <p class="kpi-label">Qty</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="kpi-content">
+                <h3>Revenue</h3>
+                <p class="kpi-value" id="revenue">0</p>
+                <p class="kpi-label">Php</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="kpi-content">
+                <h3>Low Stocks Alert</h3>
+                <p class="kpi-value" id="low-stocks-alert">0</p>
+                <p class="kpi-label">Qty</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="kpi-content">
+                <h3>Pending Orders</h3>
+                <p class="kpi-value" id="pending-orders">0</p>
+                <p class="kpi-label">Qty</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content (Two Columns) -->
+    <div class="dashboard-main">
+        <!-- Left Column - Charts -->
+        <div class="dashboard-column">
+            <!-- Sales Trend Chart -->
+            <div class="dashboard-card chart-card">
+                <div class="card-header">
+                    <h3>Sales Trend</h3>
+                    <div class="filter-dropdown">
+                        <select id="sales-trend-year">
+                            {% for year in years %}
+                            <option value="{{ year }}">{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="sales-trend-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Earning Summary Chart -->
+            <div class="dashboard-card chart-card">
+                <div class="card-header">
+                    <h3>Earning Summary</h3>
+                    <div class="filter-dropdown">
+                        <select id="earning-summary-year">
+                            {% for year in years %}
+                            <option value="{{ year }}">{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="earning-summary-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Inventory & Activities -->
+        <div class="dashboard-column">
+            <!-- Inventory Levels -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>Inventory Levels</h3>
+                </div>
+                <div class="card-body">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Qty</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-levels-body">
+                            {% for item in inventory_items %}
+                            <tr>
+                                <td>{{ item.category }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td><span class="status-badge {{ item.status_class }}">{{ item.status }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Selling Products -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>Top Selling Products</h3>
+                    <div class="filter-dropdown">
+                        <select id="top-selling-day">
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="week">Week</option>
+                            <option value="month">Month</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <ul class="top-selling-list" id="top-selling-products">
+                        {% for product in top_selling_products %}
+                        <li>
+                            <div class="product-info">
+                                <span class="product-rank">{{ forloop.counter }}</span>
+                                <span class="product-name">{{ product.name }}</span>
+                            </div>
+                            <span class="product-sales">{{ product.sales }} sold</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>Recent Activities</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="activity-list" id="recent-activities">
+                        {% for activity in recent_activities %}
+                        <li>
+                            <div class="activity-icon">
+                                <i class="fas {{ activity.icon }}"></i>
+                            </div>
+                            <div class="activity-details">
+                                <p class="activity-description">{{ activity.description }}</p>
+                                <p class="activity-time">{{ activity.time }}</p>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="view-all">
+                        <a href="{% url 'online_retail_dash:orders' %}" class="view-all-btn">View all orders</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'online_retail_dash/js/charts.js' %}"></script>
+<script src="{% static 'online_retail_dash/js/dashboard.js' %}"></script>
+
+<script>
+// Initialize with Django context data
+$(document).ready(function() {
+    // Pass context data to JavaScript
+    const salesData = {{ sales_data|safe }};
+    const earningsData = {{ earnings_data|safe }};
+
+    // Initialize charts with the data
+    initSalesTrendChart(salesData);
+    initEarningsSummaryChart(earningsData);
+
+    // Update KPI values
+    $('#total-orders').text({{ total_orders }});
+    $('#revenue').text('{{ revenue|floatformat:2 }}');
+    $('#low-stocks-alert').text({{ low_stocks_alert }});
+    $('#pending-orders').text({{ pending_orders }});
+});
+</script>
+{% endblock %}

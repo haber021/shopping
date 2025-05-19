@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Create Order - RetailPay{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">Create New Order</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'retail:order_list' %}">Orders</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Create New Order</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Order Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="orderForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ order_form.customer.id_for_label }}" class="form-label">Customer*</label>
+                            {{ order_form.customer.errors }}
+                            <select name="{{ order_form.customer.name }}" id="{{ order_form.customer.id_for_label }}" 
+                                    class="form-select {% if order_form.customer.errors %}is-invalid{% endif %}" required>
+                                <option value="">Select Customer</option>
+                                {% for choice in order_form.customer.field.choices %}
+                                    {% if choice.0 %}
+                                        <option value="{{ choice.0 }}" {% if order_form.customer.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                            {{ choice.1 }}
+                                        </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ order_form.status.id_for_label }}" class="form-label">Status*</label>
+                            {{ order_form.status.errors }}
+                            <select name="{{ order_form.status.name }}" id="{{ order_form.status.id_for_label }}" 
+                                    class="form-select {% if order_form.status.errors %}is-invalid{% endif %}" required>
+                                {% for choice in order_form.status.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if order_form.status.value == choice.0 %}selected{% endif %}>
+                                        {{ choice.1 }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ order_form.notes.id_for_label }}" class="form-label">Notes</label>
+                            {{ order_form.notes.errors }}
+                            <textarea name="{{ order_form.notes.name }}" id="{{ order_form.notes.id_for_label }}" 
+                                    class="form-control {% if order_form.notes.errors %}is-invalid{% endif %}" 
+                                    rows="3">{{ order_form.notes.value|default:'' }}</textarea>
+                        </div>
+                        
+                        <input type="hidden" name="{{ order_form.total_amount.name }}" id="{{ order_form.total_amount.id_for_label }}" 
+                               value="{{ order_form.total_amount.value|default:'0.00' }}">
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Order Items</h5>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                        <i class="fas fa-plus-circle"></i> Add Item
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="orderItemsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th width="100">Price</th>
+                                    <th width="100">Quantity</th>
+                                    <th width="120">Total</th>
+                                    <th width="50">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr id="noItemsRow">
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="alert alert-info mb-0">
+                                            No items added yet. Click "Add Item" to add products to this order.
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="3" class="text-end">Total Amount:</th>
+                                    <th class="text-end" id="orderTotal">₱0.00</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'retail:order_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="button" id="submitOrder" class="btn btn-primary">Create Order</button>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Subtotal:</span>
+                        <span id="summarySubtotal">₱0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Tax (0%):</span>
+                        <span>₱0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Shipping:</span>
+                        <span>₱0.00</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-0">
+                        <strong>Total:</strong>
+                        <strong id="summaryTotal">₱0.00</strong>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Help</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="small">
+                        <li>Select a customer or create a new one.</li>
+                        <li>Add at least one product to the order.</li>
+                        <li>Verify quantities and prices before creating the order.</li>
+                        <li>The order status can be updated later.</li>
+                        <li>Notes are optional but useful for special instructions.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addItemModalLabel">Add Product to Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addItemForm">
+                    <div class="mb-3">
+                        <label for="product" class="form-label">Product*</label>
+                        <select id="product" class="form-select" required>
+                            <option value="">Select Product</option>
+                            <!-- This would be populated with products from the database -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price*</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" id="price" class="form-control" min="0.01" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity*</label>
+                        <input type="number" id="quantity" class="form-control" min="1" value="1" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="addItemToOrder">Add to Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/retail.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sample product data - in a real app, this would come from an API
+    const products = [
+        { id: 1, name: "Laptop", price: 899.99 },
+        { id: 2, name: "Smartphone", price: 599.99 },
+        { id: 3, name: "Headphones", price: 89.99 },
+        { id: 4, name: "Monitor", price: 249.99 },
+        { id: 5, name: "Keyboard", price: 49.99 }
+    ];
+    
+    // Populate product dropdown
+    const productSelect = document.getElementById('product');
+    products.forEach(product => {
+        const option = document.createElement('option');
+        option.value = product.id;
+        option.textContent = `₱{product.name} - $₱{product.price.toFixed(2)}`;
+        option.dataset.price = product.price;
+        productSelect.appendChild(option);
+    });
+    
+    // Update price when product is selected
+    productSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            document.getElementById('price').value = selectedOption.dataset.price;
+        } else {
+            document.getElementById('price').value = '';
+        }
+    });
+    
+    // Add item to order
+    document.getElementById('addItemToOrder').addEventListener('click', function() {
+        const productSelect = document.getElementById('product');
+        const priceInput = document.getElementById('price');
+        const quantityInput = document.getElementById('quantity');
+        
+        // Validate
+        if (!productSelect.value || !priceInput.value || !quantityInput.value) {
+            alert('Please fill in all required fields');
+            return;
+        }
+        
+        const selectedProduct = productSelect.options[productSelect.selectedIndex];
+        const price = parseFloat(priceInput.value);
+        const quantity = parseInt(quantityInput.value);
+        const total = price * quantity;
+        
+        // Remove "no items" row if present
+        const noItemsRow = document.getElementById('noItemsRow');
+        if (noItemsRow) {
+            noItemsRow.remove();
+        }
+        
+        // Add item to table
+        const tableBody = document.querySelector('#orderItemsTable tbody');
+        const newRow = document.createElement('tr');
+        newRow.dataset.productId = productSelect.value;
+        newRow.dataset.price = price;
+        newRow.dataset.quantity = quantity;
+        
+        newRow.innerHTML = `
+            <td>₱{selectedProduct.textContent.split(' - ')[0]}</td>
+            <td>$₱{price.toFixed(2)}</td>
+            <td>₱{quantity}</td>
+            <td class="text-end">$₱{total.toFixed(2)}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tableBody.appendChild(newRow);
+        
+        // Update totals
+        updateOrderTotal();
+        
+        // Reset form and close modal
+        document.getElementById('addItemForm').reset();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addItemModal'));
+        modal.hide();
+    });
+    
+    // Remove item from order
+    document.querySelector('#orderItemsTable').addEventListener('click', function(e) {
+        if (e.target.closest('.remove-item')) {
+            e.target.closest('tr').remove();
+            
+            // Check if there are no items left
+            const tableBody = document.querySelector('#orderItemsTable tbody');
+            if (tableBody.children.length === 0) {
+                tableBody.innerHTML = `
+                    <tr id="noItemsRow">
+                        <td colspan="5" class="text-center py-4">
+                            <div class="alert alert-info mb-0">
+                                No items added yet. Click "Add Item" to add products to this order.
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // Update totals
+            updateOrderTotal();
+        }
+    });
+    
+    // Update order total
+    function updateOrderTotal() {
+        let total = 0;
+        const rows = document.querySelectorAll('#orderItemsTable tbody tr:not(#noItemsRow)');
+        
+        rows.forEach(row => {
+            const price = parseFloat(row.dataset.price);
+            const quantity = parseInt(row.dataset.quantity);
+            total += price * quantity;
+        });
+        
+        document.getElementById('orderTotal').textContent = `$₱{total.toFixed(2)}`;
+        document.getElementById('summarySubtotal').textContent = `$₱{total.toFixed(2)}`;
+        document.getElementById('summaryTotal').textContent = `$₱{total.toFixed(2)}`;
+        document.getElementById('{{ order_form.total_amount.id_for_label }}').value = total.toFixed(2);
+    }
+    
+    // Submit order
+    document.getElementById('submitOrder').addEventListener('click', function() {
+        const customer = document.getElementById('{{ order_form.customer.id_for_label }}').value;
+        const rows = document.querySelectorAll('#orderItemsTable tbody tr:not(#noItemsRow)');
+        
+        // Validate
+        if (!customer) {
+            alert('Please select a customer');
+            return;
+        }
+        
+        if (rows.length === 0) {
+            alert('Please add at least one item to the order');
+            return;
+        }
+        
+        // Submit the form
+        document.getElementById('orderForm').submit();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,128 @@
+/* General styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Sidebar styling */
+#sidebar {
+    min-height: 100vh;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    z-index: 100;
+    padding: 0;
+}
+
+.sidebar-header {
+    padding: 1rem;
+    background: #343a40;
+    color: white;
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #333;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid transparent;
+}
+
+.sidebar .nav-link:hover {
+    color: #007bff;
+    background-color: #f0f0f0;
+    border-left: 3px solid #ccc;
+}
+
+.sidebar .nav-link.active {
+    color: #007bff;
+    background-color: #e9ecef;
+    border-left: 3px solid #007bff;
+}
+
+.user-info {
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Dashboard cards */
+.stats-card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.stats-card .card-icon {
+    font-size: 2rem;
+    padding: 1rem;
+    border-radius: 50%;
+    margin-right: 1rem;
+}
+
+/* Tables styling */
+.table-container {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    padding: 1rem;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* Low stock warning colors */
+.status-normal {
+    color: #28a745;
+}
+
+.status-low {
+    color: #ffc107;
+}
+
+.status-critical {
+    color: #dc3545;
+}
+
+/* Form styling */
+.form-container {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Activity log styling */
+.activity-log-item {
+    border-left: 3px solid #007bff;
+    padding-left: 1rem;
+    margin-bottom: 1rem;
+}
+
+.activity-log-item .timestamp {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    #sidebar {
+        min-height: auto;
+        position: relative;
+    }
+    
+    .sidebar-header {
+        text-align: center;
+    }
+}

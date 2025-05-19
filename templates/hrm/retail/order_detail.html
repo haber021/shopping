@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Detail - Retail ERP System{% endblock %}
+
+{% block header_title %}Order #{{ order_id }}{% endblock %}
+
+{% block header_buttons %}
+<div class="btn-group">
+    <a href="{% url 'retail:orders' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i> Back to Orders
+    </a>
+    <button class="btn btn-outline-primary" onclick="window.print()">
+        <i class="fas fa-print me-2"></i> Print Order
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Order Information -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Order Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Order ID:</h6>
+                    <p class="mb-0">#{{ order_id }}</p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Order Date:</h6>
+                    <p class="mb-0">Date Placeholder</p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Status:</h6>
+                    <div>
+                        <span class="badge bg-warning">Pending</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Payment Status:</h6>
+                    <div>
+                        <span class="badge bg-danger">Unpaid</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Total Amount:</h6>
+                    <p class="mb-0">$0.00</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Customer Information -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Customer Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Name:</h6>
+                    <p class="mb-0">Customer Name Placeholder</p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Email:</h6>
+                    <p class="mb-0">email@example.com</p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Phone:</h6>
+                    <p class="mb-0">Phone Placeholder</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Shipping Information -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Shipping Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Shipping Address:</h6>
+                    <p class="mb-0">Address Placeholder</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Items -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Order Items</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="5" class="text-center py-3">No items in this order.</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                        <td><strong>$0.00</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Update Order Status -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Update Order</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="#">
+            {% csrf_token %}
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Order Status</label>
+                    <select name="status" class="form-select">
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Payment Status</label>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" name="payment_status">
+                        <label class="form-check-label">Paid</label>
+                    </div>
+                </div>
+            </div>
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary">Update Order</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

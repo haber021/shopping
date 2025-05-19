@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Retail ERP System{% endblock %}
+
+{% block header_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Quick Stats Row -->
+    <div class="row mb-4">
+        <!-- Total Employees -->
+        <div class="col-md-3">
+            <div class="card stat-card stat-card-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-muted mb-0">Total Employees</h6>
+                            <div class="stat-number">{{ total_employees }}</div>
+                            <div class="stat-text">{{ active_employees }} active, {{ on_leave_employees }} on leave</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-users fa-2x text-primary opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Orders Stats -->
+        <div class="col-md-3">
+            <div class="card stat-card stat-card-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-muted mb-0">Total Orders</h6>
+                            <div class="stat-number">{{ total_orders }}</div>
+                            <div class="stat-text">
+                                {% if order_trend_percentage > 0 %}
+                                    <span class="text-success">↑ {{ order_trend_percentage }}%</span>
+                                {% elif order_trend_percentage < 0 %}
+                                    <span class="text-danger">↓ {{ order_trend_percentage|abs }}%</span>
+                                {% else %}
+                                    <span>No change</span>
+                                {% endif %}
+                                from yesterday
+                            </div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-cart fa-2x text-success opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inventory Stats -->
+        <div class="col-md-3">
+            <div class="card stat-card stat-card-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-muted mb-0">Inventory Value</h6>
+                            <div class="stat-number">${{ inventory_value|floatformat:2 }}</div>
+                            <div class="stat-text">{{ low_stock_items }} items low on stock</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-boxes fa-2x text-warning opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recruitment Stats -->
+        <div class="col-md-3">
+            <div class="card stat-card stat-card-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-muted mb-0">Recruitment</h6>
+                            <div class="stat-number">{{ new_applications }}</div>
+                            <div class="stat-text">{{ interviews_scheduled }} interviews scheduled</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-user-plus fa-2x text-danger opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Second Row: Charts and Activity -->
+    <div class="row mb-4">
+        <!-- Employee Attendance Chart -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Employee Attendance (Today)</span>
+                    <a href="{% url 'hr:attendance' %}" class="btn btn-sm btn-outline-primary">Details</a>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2" style="width: 12px; height: 12px; background-color: rgba(40, 167, 69, 0.8); border-radius: 50%;"></div>
+                                <span>Present: {{ present_percentage }}% ({{ present_count }})</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2" style="width: 12px; height: 12px; background-color: rgba(255, 193, 7, 0.8); border-radius: 50%;"></div>
+                                <span>Late: {{ late_percentage }}% ({{ late_count }})</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="me-2" style="width: 12px; height: 12px; background-color: rgba(220, 53, 69, 0.8); border-radius: 50%;"></div>
+                                <span>Absent: {{ absent_percentage }}% ({{ absent_count }})</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="employeeAttendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">Recent Activity</div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if recent_activities %}
+                            {% for activity in recent_activities %}
+                                <div class="list-group-item activity-item">
+                                    <div class="d-flex">
+                                        <div class="activity-icon bg-light-{{ activity.type }} text-{{ activity.type }}">
+                                            <i class="fas fa-{{ activity.icon }}"></i>
+                                        </div>
+                                        <div>
+                                            <p class="mb-1">{{ activity.description }}</p>
+                                            <small class="text-muted">{{ activity.timestamp|date:"g:i A" }} - {{ activity.timestamp|date:"M d, Y" }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item">
+                                <p class="text-center mb-0">No recent activity</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upcoming Schedule -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">Upcoming Schedule</div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if upcoming_events %}
+                            {% for event in upcoming_events %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ event.title }}</h6>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-calendar-day text-primary me-2"></i>
+                                        <small>
+                                            {{ event.date|date:"M d, Y" }}
+                                            {% if event.time %}
+                                                at {{ event.time|time:"g:i A" }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item">
+                                <p class="text-center mb-0">No upcoming events</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Third Row: HR & Business Integration -->
+    <div class="row">
+        <!-- Integration: Sales vs Staffing -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Sales vs. Staff Hours (Last 6 Months)</span>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-secondary">Monthly</button>
+                        <button type="button" class="btn btn-outline-secondary">Weekly</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="salesStaffingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Department Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Employee Distribution by Department</span>
+                    <a href="{% url 'hr:employees' %}" class="btn btn-sm btn-outline-primary">Details</a>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="departmentDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Retail Images Grid -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">Our Retail Operations</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <img src="https://pixabay.com/get/g4233787b33f1551d460ac8f926710e5bd6b1c362fab48e15f8bdaf4011d75461fd59c21bac743c4f75f0d918a9be205c4cb0e9581b6d0f3d45c582b6a2d8a513_1280.jpg" alt="Retail Employees" class="img-fluid rounded">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <img src="https://pixabay.com/get/g16ed3ff32d0c9ea0dcd565d2aad44151a5808ec14855462a2f5e90c3db9e0cceba597dffaa92e7e03812688d961d0a63bd61c0272ef0b449e8ff205bd30ef084_1280.jpg" alt="Retail Employees" class="img-fluid rounded">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <img src="https://pixabay.com/get/g2f7ccf2763b3127a07499e132312687d48703c4e586e28e3d5a541d00ca0cc290e6df7847c412b34470103f20f4e9c1ef14ecedb6e602ad5fe344b9bdd813ce6_1280.jpg" alt="Warehouse Inventory" class="img-fluid rounded">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <img src="https://pixabay.com/get/g89d861a6f97a2c56d7d871bc12d80656228fd25c58509cccb4e812b88bb68969d45ec62ee70a7860e43cff62cd47b32ec31f28965d72d6fda356c2cb6756fc86_1280.jpg" alt="HR Management" class="img-fluid rounded">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/charts.js"></script>
+<script>
+    // Pass any dynamic data to charts here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update attendance chart with actual percentages
+        const attendanceChart = Chart.getChart('employeeAttendanceChart');
+        if (attendanceChart) {
+            attendanceChart.data.datasets[0].data = [
+                {{ present_percentage }},
+                {{ late_percentage }},
+                {{ absent_percentage }}
+            ];
+            attendanceChart.update();
+        }
+    });
+</script>
+{% endblock %}

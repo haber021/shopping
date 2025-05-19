@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load shop_tags %}
+
+{% block title %}Customers{% endblock %}
+
+{% block header_title %}Customers{% endblock %}
+
+{% block search_url %}{% url 'shop:customer_list' %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Filters and Actions Row -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <div class="btn-group" role="group">
+                <a href="{% url 'shop:customer_list' %}" class="btn btn-outline-secondary {% if not request.GET.status %}active{% endif %}">All</a>
+                <a href="{% url 'shop:customer_list' %}?status=active" class="btn btn-outline-success {% if request.GET.status == 'active' %}active{% endif %}">
+                    Active
+                </a>
+                <a href="{% url 'shop:customer_list' %}?status=inactive" class="btn btn-outline-secondary {% if request.GET.status == 'inactive' %}active{% endif %}">
+                    Inactive
+                </a>
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'shop:customer_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Add New Customer
+            </a>
+        </div>
+    </div>
+    
+    <!-- Customers Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Customer ID</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Phone</th>
+                            <th scope="col">Orders</th>
+                            <th scope="col">Loyalty Points</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in page_obj %}
+                        <tr>
+                            <th scope="row">{{ customer.id }}</th>
+                            <td>{{ customer.name }}</td>
+                            <td>{{ customer.email }}</td>
+                            <td>{{ customer.phone|default:"-" }}</td>
+                            <td>{{ customer.orders.count }}</td>
+                            <td>{{ customer.loyalty_points }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'shop:customer_detail' customer.id %}" class="btn btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'shop:customer_edit' customer.id %}" class="btn btn-outline-secondary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <p class="mb-0 text-muted">No customers found</p>
+                                {% if search_query or request.GET.status %}
+                                <p class="small mb-0">Try adjusting your search or filter criteria</p>
+                                {% else %}
+                                <a href="{% url 'shop:customer_create' %}" class="btn btn-sm btn-primary mt-2">Add New Customer</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.paginator.num_pages > 1 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

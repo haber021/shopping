@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard - RetailPay Philippines{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0 text-gray-800">Unified Dashboard</h1>
+            <p class="text-muted">Retail Operations + Payroll Overview</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-store me-2"></i>Retail Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column">
+                                <p class="text-muted mb-1">Today's Sales</p>
+                                <h3 class="font-weight-bold">₱{{ todays_sales|floatformat:2|intcomma }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column">
+                                <p class="text-muted mb-1">Low Stock Alerts</p>
+                                <h3 class="font-weight-bold">{{ low_stock_count }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column">
+                                <p class="text-muted mb-1">Pending Orders</p>
+                                <h3 class="font-weight-bold">{{ pending_orders }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <canvas id="salesChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-money-check-alt me-2"></i>Payroll Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column">
+                                <p class="text-muted mb-1">Next Payroll</p>
+                                <h3 class="font-weight-bold">{{ next_payroll_date|date:"M d" }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column">
+                                <p class="text-muted mb-1">Employees</p>
+                                <h3 class="font-weight-bold">{{ employee_count }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column">
+                                <p class="text-muted mb-1">Total Payroll</p>
+                                <h3 class="font-weight-bold">₱{{ total_payroll_amount|floatformat:0|intcomma }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <canvas id="payrollChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for activity in recent_activity %}
+                            <div class="list-group-item list-group-item-action">
+                                {% if activity.type == 'order' %}
+                                    <i class="fas fa-shipping-fast me-2 text-info"></i>
+                                {% elif activity.type == 'payroll' %}
+                                    <i class="fas fa-money-bill-wave me-2 text-success"></i>
+                                {% elif activity.type == 'employee' %}
+                                    <i class="fas fa-user-plus me-2 text-primary"></i>
+                                {% endif %}
+                                {{ activity.message }}
+                                <small class="text-muted float-end">{{ activity.date|date:"M d, Y" }}</small>
+                            </div>
+                        {% empty %}
+                            <div class="list-group-item">No recent activity found.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'shop:order_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-1"></i> New Order
+                        </a>
+                        <a href="{% url 'shop:product_create' %}" class="btn btn-info">
+                            <i class="fas fa-box me-1"></i> Add Product
+                        </a>
+                        <a href="{% url 'payroll:run_payroll' %}" class="btn btn-success">
+                            <i class="fas fa-money-check me-1"></i> Run Payroll
+                        </a>
+                        <a href="{% url 'payroll:add_employee' %}" class="btn btn-secondary">
+                            <i class="fas fa-user-plus me-1"></i> Add Employee
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sample data for sales chart
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    const salesChart = new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Monthly Sales',
+                data: [12000, 19000, 15000, 25000, 22000, 30000],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Sample data for payroll chart
+    const payrollCtx = document.getElementById('payrollChart').getContext('2d');
+    const payrollChart = new Chart(payrollCtx, {
+        type: 'bar',
+        data: {
+            labels: ['IT', 'Marketing', 'Sales', 'Support', 'Supply'],
+            datasets: [{
+                label: 'Department Payroll',
+                data: [42000, 36000, 55000, 30000, 25000],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)',
+                    'rgba(255, 159, 64, 0.5)',
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)'
+                ],
+                borderColor: [
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,231 @@
+/* CRM Custom Styles */
+
+/* General Layout */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
+/* Sidebar */
+.sidebar {
+    min-height: calc(100vh - 56px);
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    z-index: 100;
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    border-radius: 0.25rem;
+    margin-bottom: 0.2rem;
+}
+
+.sidebar .nav-link.active,
+.sidebar .nav-link:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.sidebar-heading {
+    font-size: .75rem;
+    text-transform: uppercase;
+}
+
+/* Dashboard Widgets */
+.stat-card {
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Activity Feed */
+.activity-feed {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    border-left: 2px solid var(--bs-primary);
+    padding-left: 1rem;
+    position: relative;
+}
+
+.activity-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -0.5rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background-color: var(--bs-primary);
+}
+
+/* Contacts Page */
+.contact-list {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.contact-card {
+    transition: all 0.2s;
+}
+
+.contact-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.tag {
+    cursor: pointer;
+}
+
+.tag:hover {
+    background-color: var(--bs-primary) !important;
+    color: white !important;
+}
+
+/* Kanban Board */
+.kanban-board {
+    min-height: 70vh;
+    overflow-x: auto;
+}
+
+.stage-column {
+    min-width: 250px;
+    max-width: 300px;
+    min-height: 65vh;
+}
+
+.stage-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.stage-content {
+    min-height: 50px;
+}
+
+.lead-card {
+    cursor: grab;
+}
+
+.lead-card.dragging {
+    opacity: 0.7;
+}
+
+.stage-column.drag-over {
+    background-color: rgba(var(--bs-info-rgb), 0.1);
+}
+
+/* Task Calendar */
+.fc-event {
+    cursor: pointer;
+}
+
+.high-priority {
+    border-left: 4px solid var(--bs-danger);
+}
+
+.medium-priority {
+    border-left: 4px solid var(--bs-warning);
+}
+
+.low-priority {
+    border-left: 4px solid var(--bs-info);
+}
+
+/* Task Toggles */
+.task-status-toggle {
+    cursor: pointer;
+}
+
+/* Reports Page */
+.chart-container {
+    position: relative;
+    height: 40vh;
+    width: 100%;
+}
+
+.report-card {
+    height: 100%;
+}
+
+/* Toast Container */
+#toastContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1050;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .sidebar {
+        min-height: auto;
+    }
+    
+    .kanban-board {
+        flex-direction: column;
+    }
+    
+    .stage-column {
+        min-width: 100%;
+        max-width: 100%;
+        min-height: auto;
+        margin-bottom: 1.5rem;
+    }
+    
+    .chart-container {
+        height: 50vh;
+    }
+}
+
+/* RTL support */
+[dir="rtl"] .sidebar {
+    box-shadow: inset 1px 0 0 rgba(0, 0, 0, .1);
+}
+
+[dir="rtl"] .activity-item {
+    border-left: none;
+    border-right: 2px solid var(--bs-primary);
+    padding-left: 0;
+    padding-right: 1rem;
+}
+
+[dir="rtl"] .activity-item::before {
+    left: auto;
+    right: -0.5rem;
+}
+
+/* Accessibility */
+.btn:focus, .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Print styles */
+@media print {
+    .sidebar, 
+    .navbar, 
+    .btn,
+    form {
+        display: none;
+    }
+    
+    .chart-container {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        height: auto;
+        width: 100%;
+    }
+    
+    .container {
+        max-width: 100%;
+        width: 100%;
+    }
+}

@@ -1,0 +1,14 @@
+{% extends 'admin/base_site.html' %}
+{% load i18n %}
+
+{% block userlinks %}
+    <!-- Add a link to the customer shop -->
+    <a href="/" class="btn btn-outline-primary btn-sm" style="margin-right: 10px;">
+        <i class="fas fa-store"></i> {% trans 'Customer Shop' %}
+    </a>
+    {{ block.super }}
+{% endblock %}
+
+{% block branding %}
+    <h1 id="site-name"><a href="{% url 'admin:index' %}">ERP Shopping System Administration</a></h1>
+{% endblock %}

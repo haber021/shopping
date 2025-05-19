@@ -1,0 +1,140 @@
+{% extends 'customer/base.html' %}
+
+{% block title %}{{ product.name }} - ERP Shopping System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'customer:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'customer:product_list' %}">Products</a></li>
+            {% if product.category %}
+                <li class="breadcrumb-item"><a href="{% url 'customer:product_by_category' product.category.id %}">{{ product.category.name }}</a></li>
+            {% endif %}
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <!-- Product Image -->
+        <div class="col-md-5 mb-4">
+            <div class="card border-0 shadow-sm">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" class="card-img-top product-detail-image" alt="{{ product.name }}">
+                {% else %}
+                    <img src="/static/img/products/default.jpg" class="card-img-top product-detail-image" alt="{{ product.name }}">
+                {% endif %}
+            </div>
+        </div>
+        
+            <!-- Price, stock, category info -->
+            <div class="mb-4">
+                <div class="fs-3 fw-bold text-primary mb-2">${{ product.price }}</div>
+                
+                <p class="mb-1">
+                    <span class="badge bg-{% if product.stock > 10 %}success{% else %}warning{% endif %}">
+                        {% if product.stock > 10 %}
+                            In Stock
+                        {% elif product.stock > 0 %}
+                            Low Stock ({{ product.stock }} left)
+                        {% else %}
+                            Out of Stock
+                        {% endif %}
+                    </span>
+                    
+                    {% if product.category %}
+                        <span class="badge bg-secondary">{{ product.category.name }}</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            <!-- Description -->
+            <div class="mb-4 product-detail-info">
+                <h5>Description</h5>
+                <p>{{ product.description|linebreaksbr }}</p>
+            </div>
+            
+                <!-- Add to cart form -->
+                <form method="post" action="{% url 'customer:add_to_cart' product.id %}" class="mb-4">
+                    {% csrf_token %}
+                    <div class="row g-3 align-items-center">
+                        <div class="col-auto">
+                            <label for="quantity" class="col-form-label">Quantity:</label>
+                        </div>
+                        <div class="col-auto">
+                            <input type="number" id="quantity" name="quantity" value="1" min="1" max="{{ product.stock }}" class="form-control" {% if product.stock <= 0 %}disabled{% endif %}>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary btn-lg" {% if product.stock <= 0 %}disabled{% endif %}>
+                                <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            
+            <!-- Additional information -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Product Details</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <th scope="row" class="w-25">Product ID:</th>
+                                <td>{{ product.id }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Category:</th>
+                                <td>{{ product.category.name|default:"Not categorized" }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Availability:</th>
+                                <td>{{ product.stock }} in stock</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Related Products Section -->
+    {% if related_products %}
+        <section class="mt-5">
+            <h3 class="mb-4">Related Products</h3>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                {% for related in related_products %}
+                    <div class="col">
+                        <div class="card h-100 product-card border-0 shadow-sm">
+                            {% if related.image %}
+                                <img src="{{ related.image.url }}" class="card-img-top product-image" alt="{{ related.name }}">
+                            {% else %}
+                                <img src="/static/img/products/default.jpg" class="card-img-top product-image" alt="{{ related.name }}">
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ related.name }}</h5>
+                                <p class="card-text text-muted">{{ related.description|truncatechars:60 }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fs-5 fw-bold text-primary">${{ related.price }}</span>
+                                    <div>
+                                        <a href="{% url 'customer:product_detail' related.id %}" class="btn btn-sm btn-outline-secondary me-1">Details</a>
+                                        <form method="post" action="{% url 'customer:add_to_cart' related.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="quantity" value="1">
+                                            <button type="submit" class="btn btn-sm btn-primary btn-add-to-cart">
+                                                <i class="fas fa-cart-plus"></i> Add
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}
